@@ -9,3 +9,6 @@
 /.github export-ignore
 CHANGELOG.md export-ignore
 .styleci.yml export-ignore
+
+# Raw RFC 5322 fixtures must keep their CRLF bytes exactly.
+*.eml -text
