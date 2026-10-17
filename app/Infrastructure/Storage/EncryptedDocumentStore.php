@@ -18,7 +18,7 @@ final class EncryptedDocumentStore
     {
         $path = sprintf('%s/%s/documents/%s.bin', config('recruitment.storage.documents_prefix'), $candidateUuid, $documentUuid);
 
-        $this->disk()->put($path, $this->encrypter->encryptString($plainBytes));
+        $this->writeEncrypted($path, $plainBytes);
 
         return $path;
     }
@@ -49,6 +49,43 @@ final class EncryptedDocumentStore
     public function exists(string $path): bool
     {
         return $this->disk()->exists($path);
+    }
+
+    /**
+     * Encrypted raw .eml of an intake message (kickoff §5.2), stored before any parsing.
+     */
+    public function putIntake(string $uuid, string $rawBytes): string
+    {
+        $path = sprintf('%s/%s.bin', config('recruitment.storage.intake_prefix'), $uuid);
+
+        $this->writeEncrypted($path, $rawBytes);
+
+        return $path;
+    }
+
+    public function delete(string $path): void
+    {
+        $this->disk()->delete($path);
+    }
+
+    /**
+     * Quarantined (infected) file, encrypted and outside every pipeline (M2-P0-02).
+     * Keyed by SHA-256 so a re-sent infected file overwrites its own copy (D-111).
+     */
+    public function putQuarantined(string $sha256, string $bytes): string
+    {
+        $path = sprintf('%s/%s.bin', config('recruitment.storage.quarantine_prefix'), $sha256);
+
+        $this->writeEncrypted($path, $bytes);
+
+        return $path;
+    }
+
+    private function writeEncrypted(string $path, string $bytes): void
+    {
+        if (! $this->disk()->put($path, $this->encrypter->encryptString($bytes))) {
+            throw new \RuntimeException('encrypted_storage_failed');
+        }
     }
 
     public function disk(): Filesystem

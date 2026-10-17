@@ -11,6 +11,7 @@ enum DocumentKind: string
     case Cv = 'cv';
     case SupportingDocument = 'supporting_document';
     case Uncertain = 'uncertain';
+    case Other = 'other';
 
     public static function translationGroup(): string
     {

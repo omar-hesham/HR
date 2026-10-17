@@ -13,6 +13,7 @@ return [
         'cv' => 'CV',
         'supporting_document' => 'Supporting document',
         'uncertain' => 'Uncertain',
+        'other' => 'Other',
     ],
     'document_status' => [
         'pending' => 'Waiting',
@@ -40,6 +41,9 @@ return [
         'low_quality' => 'Low text quality',
         'suspected_reversed' => 'Reversed Arabic suspected',
         'duplicate_of_unreadable' => 'Duplicate of unreadable file',
+        'malware_detected' => 'Malware detected (quarantined)',
+        'image_attachment' => 'Image attachment (kept for review)',
+        'uncertain_attachment' => 'Uncertain attachment (kept for review)',
     ],
     'application_status' => [
         'received' => 'Received',
@@ -125,5 +129,24 @@ return [
         'exempted' => 'Exempted',
         'postponed' => 'Postponed',
         'not_applicable' => 'Not applicable',
+    ],
+    'intake_outcome' => [
+        'pending' => 'Pending',
+        'processed' => 'Processed',
+        'ignored_with_reason' => 'Ignored (with reason)',
+        'needs_review' => 'Needs review',
+    ],
+    'intake_reason' => [
+        'cv_processed' => 'CV received and processed',
+        'duplicate_message' => 'Duplicate message (same Message-ID)',
+        'parse_failed' => 'Message could not be parsed',
+        'no_attachments' => 'No attachments',
+        'no_cv_attachment' => 'No CV attachment',
+    ],
+    'attachment_class' => [
+        'cv' => 'CV',
+        'image' => 'Image',
+        'uncertain' => 'Uncertain',
+        'other' => 'Other',
     ],
 ];

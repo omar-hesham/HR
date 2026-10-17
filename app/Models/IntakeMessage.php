@@ -23,6 +23,7 @@ use Illuminate\Support\Carbon;
  * @property int|null $raw_size
  * @property string|null $subject_enc
  * @property string|null $sender_hmac
+ * @property string|null $sender_enc
  * @property Carbon $received_at
  * @property Carbon|null $visible_at
  * @property string $outcome
@@ -37,7 +38,7 @@ class IntakeMessage extends Model
 
     protected $fillable = [
         'mailbox_id', 'source', 'external_id', 'message_id_header', 'raw_path', 'raw_sha256', 'raw_size',
-        'subject_enc', 'sender_hmac', 'received_at', 'visible_at', 'outcome', 'reason', 'job_hint_id', 'last_error',
+        'subject_enc', 'sender_hmac', 'sender_enc', 'received_at', 'visible_at', 'outcome', 'reason', 'job_hint_id', 'last_error',
     ];
 
     protected function casts(): array
@@ -45,6 +46,7 @@ class IntakeMessage extends Model
         return [
             'source' => SourceChannel::class,
             'subject_enc' => 'encrypted',
+            'sender_enc' => 'encrypted',
             'received_at' => 'datetime',
             'visible_at' => 'datetime',
         ];
@@ -64,5 +66,13 @@ class IntakeMessage extends Model
     public function documentSources(): HasMany
     {
         return $this->hasMany(DocumentSource::class);
+    }
+
+    /**
+     * @return HasMany<NoticeOutbox, $this>
+     */
+    public function notices(): HasMany
+    {
+        return $this->hasMany(NoticeOutbox::class);
     }
 }

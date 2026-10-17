@@ -26,6 +26,7 @@ use Illuminate\Support\Carbon;
  * @property string $attachment_key
  * @property DocumentKind $attachment_kind
  * @property Disposition $disposition
+ * @property string|null $reason
  * @property string|null $original_filename_enc
  * @property string|null $reported_mime
  * @property int|null $size
@@ -55,6 +56,7 @@ class DocumentSource extends Model
         'attachment_key',
         'attachment_kind',
         'disposition',
+        'reason',
         'original_filename_enc',
         'reported_mime',
         'size',

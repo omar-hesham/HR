@@ -145,3 +145,161 @@ All files are `[NEW]` (new repository `recruit-app/`), except skeleton files mar
 | Hard-coded strings | Easy to slip Arabic into PHP | Test scans `app/`, `resources/views/`, `routes/` for Arabic letters |
 
 Remaining open items are listed in `DECISIONS.md` (open questions) and in the final report.
+
+---
+
+# Milestone 2 Plan — Mail intake
+
+Status: approved for build after the Step 3 self-review below (16/10/2026).
+Sources of truth: spec v0.2 §5.3, §6.1 (`M1-P0-01…05`), §6.2 (`M2-P0-02` malware part), §6.3 (`M3-P0-01` dedupe part), §6.10 (`M10-P0-01`), §6.11 (`M11-P0-01`), §9.3–§9.5; kickoff §3 (webklex/php-imap, no ext-imap), §5.1–§5.2; M2 build brief.
+
+## M2.1 Objective
+
+Poll recruitment mailboxes (IMAP password/OAuth2 via `webklex/php-imap`, or a folder of `.eml` files
+for tests/local), store every raw message **encrypted with its SHA-256 before any parsing**, classify
+attachments (CV / image / other, every outcome with a reason), malware-scan CVs (ClamAV clamd socket,
+fake in tests), feed CVs into the M1 upload/extraction pipeline with `source = email`, de-duplicate at
+message and file level, queue the privacy auto-reply through `notice_outbox` (max one per sender per
+window, never to auto-generated mail), show intake health, and alert when no mail arrives for N hours.
+
+## M2.2 Scope → requirement IDs
+
+| Area | Requirement IDs | Delivered as |
+|---|---|---|
+| Driver contract | `M1-P0-04` (3 setups, kickoff §3) | `MailboxDriver` interface; `ImapMailboxDriver` (password TLS + XOAUTH2 for M365/Google via token endpoint), `FakeMailboxDriver` (`.eml` folder) |
+| Poll & cursor | `M1-P0-01`, §9.4 `PollMailbox` | `PollMailbox` queued job per mailbox (queue `intake`, overlap lock, unique), `recruit:poll-mailboxes` command, scheduler entry, cursor + `uidvalidity` + `start_at` |
+| Raw-first & idempotency | kickoff §5.2, §9.4 `PersistIntake`, `T-M1-01` | `ProcessInboundMessage` action; unique `(mailbox_id, external_id)`, skip by `raw_sha256` or `Message-ID`; raw `.eml` encrypted at rest |
+| Classification | `M1-P0-02`, `M1-P0-03`, `M1-P0-05`, `M2-P0-01` (mail part) | `AttachmentClassifier`, `JobResolver` (title/alias in subject+body, ambiguity → unassigned), per-attachment `document_sources` rows with reasons, nothing silently dropped |
+| Malware | `M2-P0-02` (malware part) | `MalwareScanner` interface; ClamAV clamd driver; `NullScanner` behind a flag; quarantine (encrypted, outside pipeline), infected never extracted |
+| De-duplication | `M3-P0-01` (file part), `T-M1-01` | SHA-256 reuse of the M1 `StoreCvFile` path + message-level hash/`Message-ID` skip |
+| Privacy auto-reply | `M10-P0-01`, §5.3 notice sender | `notice_outbox` row + `SendPrivacyNotice` job; text from settings (ar/en, seeded from lang); one per sender per window; `AutoReplyDetector` suppression |
+| Intake health | `M11-P0-01`, §9.4 `HealthCheck` | `IntakeHealth` Filament page (last poll, counts per outcome, errors, quarantine); `MonitorMailboxSilence` scheduled alert (N hours in settings) |
+| Fixtures & tests | `T-M1-01…04`, `T-M2-02/04`, brief §9 | 12 synthetic `.eml` fixtures + runtime EICAR; Pest tests through the fake driver |
+
+Out of scope: AI classification of ambiguous mail (M3), retention deletion (M4), WhatsApp/web-form
+channels (schema only), candidate messaging.
+
+## M2.3 Intake flow
+
+```mermaid
+flowchart TD
+    S["Scheduler every 5 min: recruit:poll-mailboxes"] --> P["PollMailbox job per active mailbox (queue intake, WithoutOverlapping, unique per mailbox)"]
+    P --> DR{"Driver"}
+    DR -->|"fake"| FK["FakeMailboxDriver reads .eml folder"]
+    DR -->|"m365 / google / imap"| IM["ImapMailboxDriver (webklex, TLS; XOAUTH2 or password)"]
+    FK --> F["RawInboundMessage list: external_id (UID or filename) + raw bytes, after cursor + start_at"]
+    IM --> F
+    F --> G{"UIDVALIDITY changed?"}
+    G -->|"Yes"| G1["Record uidvalidity_changed error; reset cursor (hash dedupe protects re-import)"]
+    G1 --> F
+    G -->|"No"| H["Per message: compute SHA-256 of raw .eml"]
+    H --> I{"Completed receipt with same mailbox UID or raw SHA-256?"}
+    I -->|"Yes"| Z["Skip; never ingested twice"]
+    I -->|"No"| J["Store raw .eml ENCRYPTED (private disk) and create intake_messages row (pending) BEFORE parsing"]
+    J --> K{"Parses?"}
+    K -->|"No"| KR["outcome needs_review, reason parse_failed; keep raw"]
+    K -->|"Yes"| L["Read headers; dedupe Message-ID after raw storage; encrypt sender and subject; prefer server receipt time"]
+    L --> M["AutoReplyDetector: Auto-Submitted / Precedence / List-Id / mailer-daemon / no-reply"]
+    L --> N["JobResolver: job title or alias in subject/body (search-normalized); multiple matches -> unassigned"]
+    M --> O["Classify every attachment"]
+    N --> O
+    O -->|"CV pdf/docx/doc"| Q["StoreCvFile (shared M1 pipeline): validate, malware scan, SHA-256 dedupe, encrypt, candidate+document+application (source=email, external_reference=message-id), queue extraction"]
+    O -->|"image"| R["document_sources row, kind supporting_document, excluded + reason image_attachment; review opened; no separate image document; no OCR"]
+    O -->|"uncertain (e.g. forwarded .eml)"| R2["row kind uncertain, excluded + reason uncertain_attachment; review opened"]
+    O -->|"other / inline"| R3["row excluded with reason; logged, not stored, no review"]
+    Q --> Q1{"ClamAV verdict"}
+    Q1 -->|"infected"| Q2["Quarantine encrypted outside pipeline; excluded + reason malware_detected; review opened; NEVER extracted"]
+    Q1 -->|"clean / local-test scanner bypass"| Q3["stored or duplicate_linked as in M1"]
+    Q2 --> W
+    Q3 --> W["Message outcome: any item needs review -> needs_review; else CV stored/linked -> processed; else ignored_with_reason (raw .eml deleted for ignored, hash+size kept)"]
+    R --> W
+    R2 --> W
+    R3 --> W
+    W --> X{"Privacy notice? CV application linked AND sender known AND not auto-generated AND none sent to this sender HMAC within window"}
+    X -->|"Yes"| Y["notice_outbox row (idempotency key) + SendPrivacyNotice job; sends settings text ar+en via the notice mailer; status/last_error logged"]
+    X -->|"No"| Z2["No notice; application still appears"]
+    Y --> AA["Update mailbox cursor (last external_id), last_success_at, last_message_at; errors recorded to last_error for retry (3 attempts)"]
+    Z --> AA
+    KR --> AA
+    Z2 --> AA
+    AA --> AB["IntakeHealth page: last poll, counts per outcome, open errors, quarantine"]
+    AA --> AC["MonitorMailboxSilence (hourly): no mail >= N hours (settings) -> notify ops users once per silence period"]
+```
+
+## M2.4 Module / file list
+
+**Config & env** — `[MODIFY] config/recruitment.php` (intake, malware, quarantine/intake prefixes, queue names, dedup HMAC key), `[MODIFY] config/mail.php` (notice mailer fallback), `[MODIFY] .env.example`, `[MODIFY] phpunit.xml` (DEDUP_HMAC_KEY test value), `[MODIFY] routes/console.php` (scheduler), `[MODIFY] app/Providers/AppServiceProvider.php` (MalwareScanner binding).
+
+**Domain (`app/Domain/Intake/`)** — `[NEW] RawInboundMessage`, `InboundAttachment`, `ParsedInboundMessage`, `IntakeOutcome`, `IntakeReason`, `AttachmentClass`, `AttachmentClassifier`, `AutoReplyDetector`, `JobResolver`, `Contracts/MailboxDriver`, `Contracts/MessageParser`. `[MODIFY] app/Domain/Documents/{ReviewReason, DocumentKind}` (new cases).
+
+**Infrastructure (`app/Infrastructure/Intake/`)** — `[NEW] WebklexMessageParser` (parses raw `.eml` via `Message::fromString` — one parser for every driver), `ImapMailboxDriver` (password TLS / XOAUTH2; protocol EXAMINE + BODY.PEEK, never modifies the source), `OAuthAccessTokenProvider` (M365 client-credentials, Google refresh-token), `FakeMailboxDriver` (`.eml` folder; `mailbox.host` holds the folder). `[MODIFY] app/Infrastructure/Storage/EncryptedDocumentStore` (intake + quarantine prefixes).
+
+**Malware (`app/Services/Malware/`)** — `[NEW] MalwareScanner` interface, `ScanVerdict`, `ClamAvScanner` (clamd INSTREAM socket), `NullMalwareScanner`.
+
+**Actions / services** — `[NEW] app/Actions/Documents/StoreCvFile` (per-file pipeline extracted from `UploadDocuments`; used by upload **and** mail; adds malware scan + quarantine), `StoreOutcome`; `[NEW] app/Services/Intake/{MailboxDriverFactory, ProcessInboundMessage, PrivacyNoticeGate, IntakeHealthSnapshot}`; `[MODIFY] app/Actions/Documents/UploadDocuments` (gate/limits/logging stay; per-file work delegated to `StoreCvFile`).
+
+**Jobs / scheduler / commands** — `[NEW] app/Jobs/{PollMailbox, SendPrivacyNotice, MonitorMailboxSilence}`, `app/Console/Commands/PollMailboxes`; `[MODIFY] app/Console/Commands/GenerateContentKey` (also writes `DEDUP_HMAC_KEY` when missing).
+
+**Models & migrations** — `[MODIFY] Mailbox`, `IntakeMessage`, `DocumentSource` (new columns); `[NEW] migration` adding `intake_messages.sender_enc`, `document_sources.reason`, `mailboxes.last_silence_alert_at`, `mailboxes.silence_alert_hours` → nullable.
+
+**Filament** — `[NEW] app/Filament/Pages/IntakeHealth.php` + view (thin; reads `IntakeHealthSnapshot`), gated by `ops.health.view`.
+
+**Lang** — `[MODIFY] lang/{ar,en}/{app,enums}.php` (intake, settings, notice subject/body defaults, new enum cases).
+
+**Seeders** — `[NEW] DemoMailboxSeeder` (local/testing: one `fake`-provider mailbox).
+
+**Fixtures & tests** — `[NEW] tests/Fixtures/eml/` (12 `.eml` + generator script), `tests/Feature/Intake/*` (fake-driver pipeline, raw-first, idempotency, classification, malware/EICAR at runtime, dedupe, privacy notice, poll job, health page, silence alert, job resolver), `tests/Unit/Intake/*` (classifier, autoreply detector), `[MODIFY]` existing upload tests only where the shared action changed behaviour (none expected).
+
+## M2.5 Step 3 — self-review against spec IDs and the brief
+
+| Check | Finding | Fix applied to plan |
+|---|---|---|
+| `M1-P0-01` unique numbering | First draft keyed only by UID | Unique `(mailbox_id, external_id)` + `uidvalidity` tracked; change resets cursor and relies on hash/`Message-ID` dedupe (`T-M1-03` catch-up) |
+| Kickoff §5.2 raw-first | Draft parsed to get `Message-ID` before storing raw | Raw stored + hashed before any parsing; dedupe by hash first, `Message-ID` checked after parse |
+| `M1-P0-03` "every attachment visible" | Inline signature images would flood Needs review | Inline (cid-referenced) images get logged rows with reason `inline_image` but no review item; decision D-105 |
+| `M1-P0-05` ID photos default non-retention | Storing images would retain sensitive photos by default | Images never stored in M2; metadata row + reason + review only (D-106) |
+| `M2-P0-02` malware also applies to upload | Draft scanned only mail attachments | Scan lives in shared `StoreCvFile`, so both channels scan (D-107) |
+| Spec §9.3 "ignored records: minimal record without the body" | Raw `.eml` of ignored mail keeps the body forever | Ignored messages drop the stored raw (hash + size + metadata kept); processed/needs-review keep it (D-108) |
+| `M10-P0-01` "once per registered submission" vs brief "one per sender per window" | Two rules, one must win operationally | Idempotency key per message; window check suppresses re-sending to the same sender HMAC within the configurable window (D-109) |
+| §5.3 notice sender has separate credentials | Notice would reuse the app mailer | Dedicated notice mailer from `MAIL_SEND_TRANSPORT` (D-110) |
+| Duplicate infected file re-sent | Could open a new review row each time | Re-scan on every receipt; quarantine path keyed by SHA-256 so no new file; one review row per source (per message) — accepted noise (D-111) |
+| `start_at` semantics | "Defining an operational start date prevents automatic archive import" | Driver filters `received_at >= start_at` after cursor; fake driver too (D-112) |
+| Job never inherited (`M3-P0-01`) | Duplicate CV arriving by mail for another job | Reuses `StoreCvFile` which already creates a new application per (candidate, job) |
+| Windows dev has no clamd / ext constraints | Quahog needs ext-sockets? | ClamAV driver behind `MALWARE_SCANNER` flag (`null` default locally); clamd client chosen after install check (D-113) |
+| Arabic literals rule | Default notice text would put Arabic in config | Default text lives in `lang/ar|en`; seeder copies it into settings; sender falls back to lang (D-114) |
+
+
+## M2.6 Completion review — 17/10/2026
+
+| Brief item | Verification |
+|---|---|
+| 1. Driver contract, fake + IMAP/TLS/OAuth2 | `FakeDriverTest`, `ImapDriverTest`: offline folder, original raw protocol bytes, TLS verification, M365/Google HTTP fakes; no live mailbox. |
+| 2. Raw-first, hash/size, retry and start pointer | `IntakePipelineTest`, `IntakeRecoveryTest`: instrumented MIME boundary, failed raw write, pending receipt recovery, default start date; `ImapDriverTest` covers UIDVALIDITY reset and UID reuse. |
+| 3. Attachment classification and M1 pipeline | `IntakePipelineTest`: Arabic/English, multiple CVs, images, unknown/forwarded/inline/extensionless attachments, job title/alias and conflict; every item has a disposition/reason. |
+| 4. Malware | `MalwareQuarantineTest`, `ClamdClientTest`, recovery tests: runtime-only EICAR, encrypted quarantine, no candidate/document/extraction for infected bytes, fail-closed scanner outage. |
+| 5. Dedupe | `IntakeDeduplicationTest`, recovery tests: raw hash, Message-ID, file SHA-256, replay and partial batch resume; M1 upload tests remain unchanged. |
+| 6. Notice | `PrivacyNoticeTest`, recovery tests: configurable Arabic/English copy, window across mailboxes, automated/bulk suppression, durable outbox, duplicate jobs and uncertain transport outcome. |
+| 7. Health and silence | `IntakeHealthTest`: all six roles allow/deny, visible counts/errors, configurable threshold and one alert per silence period. |
+| 8. Scheduling | `PollMailboxJobTest`: queued job per active mailbox, overlap/unique middleware, exact five-minute/hourly schedule entries, cursor and safe error recording. |
+| 9. Fixtures/tests/localization | 13 synthetic `.eml` files plus runtime exception cases; full M1 regression suite, translation parity/hints and Arabic-literal checks. |
+
+Review priorities: resumable raw writes and scan failures, UIDVALIDITY namespace, uncertain notice delivery,
+then production-only integration checks. No mailbox, SMTP, OAuth, clamd or database network service was contacted.
+Only `webklex/php-imap` was added by the original M2 implementation; no further packages were installed.
+M3 AI/scoring remains out of scope.
+
+
+## M2.7 Measured gates — 17/10/2026
+
+PHP 8.4.26, local Windows, no live services. Final full run executed alone after all code changes.
+
+- `vendor/bin/pint --test`: passed, zero style failures.
+- `vendor/bin/phpstan analyse --memory-limit=1G --no-progress`: passed, zero errors (level 6, no ignores/baseline).
+- `php artisan test`: 341 tests, 340 passed, 1 existing LibreOffice skip, 1089 assertions; zero failures/errors (150.611 s).
+- `php artisan migrate:fresh --seed`: passed on a new isolated SQLite database; 11 migrations and 4 seeders completed.
+- All 239 M1 cases remain: 238 pass and the original LibreOffice-dependent case skips; no M1 tests weakened.
+- 13 synthetic `.eml` fixtures; EICAR assembled only at runtime. Changed-file inventory is `CHANGED-FILES.txt`.
+
+Evidence: `storage/logs/m2-final-isolated.xml` (ignored local JUnit artifact).
+`.env` SHA-256 was unchanged during repair. No commit, push, deployment, package installation, or real-service connection.
+MySQL, live provider privileges/TLS, clamd and approved sending/retention remain deployment acceptance checks.

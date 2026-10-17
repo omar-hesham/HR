@@ -6,40 +6,57 @@ use App\Infrastructure\Storage\ContentEncrypter;
 use Illuminate\Console\Command;
 
 /**
- * Writes a new FILE_ENCRYPTION_KEY into .env (like key:generate). Refuses to replace an
- * existing key: files encrypted with the old key would become unreadable.
+ * Writes missing FILE_ENCRYPTION_KEY and DEDUP_HMAC_KEY into .env (like
+ * key:generate). Existing keys are never replaced: files encrypted with the old
+ * key would become unreadable, and rotating the HMAC key would break sender
+ * de-duplication.
  */
 final class GenerateContentKey extends Command
 {
-    protected $signature = 'recruit:key {--show : Print the key instead of writing it}';
+    protected $signature = 'recruit:key {--show : Print the keys instead of writing them}';
 
-    protected $description = 'Generate the content encryption key (FILE_ENCRYPTION_KEY) for CV files and text';
+    protected $description = 'Generate the content encryption key (FILE_ENCRYPTION_KEY) and the dedup HMAC key (DEDUP_HMAC_KEY)';
 
     public function handle(): int
     {
-        $key = ContentEncrypter::generateKey();
+        $keys = [
+            'FILE_ENCRYPTION_KEY' => ContentEncrypter::generateKey(),
+            'DEDUP_HMAC_KEY' => 'base64:'.base64_encode(random_bytes(32)),
+        ];
 
         if ($this->option('show')) {
-            $this->line($key);
+            foreach ($keys as $name => $key) {
+                $this->line("{$name}={$key}");
+            }
 
             return self::SUCCESS;
         }
 
         $envPath = $this->laravel->environmentFilePath();
         $contents = is_file($envPath) ? (string) file_get_contents($envPath) : '';
+        $written = false;
 
-        if (preg_match('/^FILE_ENCRYPTION_KEY=.+$/m', $contents) === 1) {
-            $this->error('FILE_ENCRYPTION_KEY is already set. Rotating it needs a re-encryption plan; nothing changed.');
+        foreach ($keys as $name => $key) {
+            if (preg_match('/^'.preg_quote($name, '/').'=..*$/m', $contents) === 1) {
+                $this->components->twoColumnDetail($name, 'already set (kept)');
 
-            return self::FAILURE;
+                continue;
+            }
+
+            $replacement = '^'.preg_quote($name, '/').'=$';
+            $contents = preg_match('/'.$replacement.'/m', $contents) === 1
+                ? (string) preg_replace('/'.$replacement.'/m', $name.'='.$key, $contents)
+                : rtrim($contents).PHP_EOL.$name.'='.$key.PHP_EOL;
+
+            $written = true;
+            $this->components->twoColumnDetail($name, 'written');
         }
 
-        $contents = preg_match('/^FILE_ENCRYPTION_KEY=$/m', $contents) === 1
-            ? (string) preg_replace('/^FILE_ENCRYPTION_KEY=$/m', 'FILE_ENCRYPTION_KEY='.$key, $contents)
-            : rtrim($contents).PHP_EOL.'FILE_ENCRYPTION_KEY='.$key.PHP_EOL;
+        if ($written) {
+            file_put_contents($envPath, $contents);
+        }
 
-        file_put_contents($envPath, $contents);
-        $this->info('FILE_ENCRYPTION_KEY written to .env. Back it up separately from the data (SEC-P0-02).');
+        $this->info('Back the keys up separately from the data (SEC-P0-02).');
 
         return self::SUCCESS;
     }

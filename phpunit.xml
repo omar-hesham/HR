@@ -34,6 +34,8 @@
         <env name="NIGHTWATCH_ENABLED" value="false"/>
         <!-- Test-only key (synthetic). Real keys live only in .env on the server. -->
         <env name="FILE_ENCRYPTION_KEY" value="base64:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="/>
+        <env name="DEDUP_HMAC_KEY" value="base64:MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY="/>
+        <env name="MAIL_SEND_TRANSPORT" value="array"/>
         <env name="SEED_USER_PASSWORD" value="Test-Only-Password-1"/>
         <env name="APP_LOCALE" value="ar"/>
         <env name="DOC_CONVERSION_ENABLED" value="false"/>

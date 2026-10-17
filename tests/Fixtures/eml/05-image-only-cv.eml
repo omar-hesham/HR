@@ -1,0 +1,23 @@
+From: Hazem Kamal <applicant5@example.test>
+To: recruitment@example.test
+Subject: My CV as a photo
+Date: Wed, 30 Sep 2026 12:00:00 +0000
+Message-ID: <fixture-05@example.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="=_recruit7e94c445012c"
+
+--=_recruit7e94c445012c
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+I do not have a PDF version; my CV is a photo.
+
+--=_recruit7e94c445012c
+Content-Type: image/png; name="my-cv.png"
+Content-Disposition: attachment; filename="my-cv.png"
+Content-Transfer-Encoding: base64
+
+iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6
+kgAAAABJRU5ErkJggg==
+
+--=_recruit7e94c445012c--

@@ -89,3 +89,39 @@ docs/                PLAN.md, DECISIONS.md
 - Files are stored under `storage/app/private`, never in `public/`; the only way to read one is the
   authorized, logged `/documents/{uuid}/download` route.
 - Secrets live only in `.env` (not committed). Settings in the database never hold secrets.
+
+
+## Milestone 2 — local mail intake
+
+Use a `fake` mailbox with `host` pointing to a folder of synthetic `.eml` files and an explicit `start_at`.
+New mailboxes default to the creation time, so older messages are not imported automatically.
+To regenerate the 13 synthetic messages: `php tests/Fixtures/eml/generate.php`.
+
+The scheduler dispatches polls every five minutes and a silence check hourly. Local commands:
+
+```powershell
+$env:PATH = "I:\factory\tools\php84;" + $env:PATH
+php artisan recruit:poll-mailboxes
+php artisan queue:work --queue=intake,extraction --timeout=300 --tries=3
+php artisan schedule:work
+```
+
+Database queue `retry_after` defaults to 600 seconds, longer than the 290-second poll timeout.
+Use separate workers for intake and extraction when enabling production scheduling.
+The read-only health page is `/admin/intake-health`, authorized by `ops.health.view`.
+
+`MALWARE_SCANNER=null` is allowed only in local/testing. Production requires `clamav` and a configured
+socket. A scanner failure leaves the original and pointer recoverable; infected bytes remain encrypted
+in quarantine and never enter extraction. Actual clamd integration still requires an authorized server test.
+
+Notices use settings `privacy.notice_text_ar/en` (translation fallback) and the configured resend window.
+`MAIL_SEND_TRANSPORT=array` is the safe local default. Approved SMTP requires the dedicated `notice`
+mailer and `MAIL_SEND_HOST/PORT/SCHEME/USERNAME/PASSWORD`, separate from intake credentials.
+Do not use the log mailer for candidate data. Pending outbox rows are redispatched by the poll command.
+Uncertain/sending notices require manual delivery reconciliation; they are shown in health and never
+resent automatically. Test failures and queue payloads contain safe codes and identifiers only.
+
+Mailbox secrets can use the encrypted, serialization-hidden `credentials` array (username/password,
+tenant_id/client_id/client_secret/refresh_token), or a non-secret `credential_ref` into
+`recruitment.intake.credentials`; the default config set uses the `MAILBOX_*` environment values.
+Live IMAP/OAuth/SMTP permissions, TLS and limits have not been accepted by offline tests.

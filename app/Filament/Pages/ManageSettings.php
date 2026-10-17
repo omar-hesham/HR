@@ -8,6 +8,7 @@ use App\Services\Settings\SettingsRepository;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
@@ -119,6 +120,16 @@ class ManageSettings extends Page
                         ])->required(),
                         Toggle::make('privacy.name_blind_default')->label(__('app.settings.name_blind_default')),
                         Toggle::make('privacy.keep_id_card_attachments')->label(__('app.settings.keep_id_cards'))->helperText(__('app.settings.keep_id_cards_help')),
+                    ]),
+                Section::make(__('app.settings.section_intake'))
+                    ->description(__('app.settings.notice_help'))
+                    ->columns(3)
+                    ->schema([
+                        TextInput::make('intake.silence_alert_hours')->label(__('app.settings.silence_alert_hours'))->integer()->required()->minValue(1)->maxValue(24 * 30),
+                        TextInput::make('intake.privacy_notice_resend_days')->label(__('app.settings.privacy_notice_resend_days'))->integer()->required()->minValue(1)->maxValue(365),
+                        TextInput::make('privacy.notice_version')->label(__('app.settings.notice_version'))->required()->maxLength(32),
+                        Textarea::make('privacy.notice_text_ar')->label(__('app.settings.notice_text_ar'))->columnSpan(3)->rows(4),
+                        Textarea::make('privacy.notice_text_en')->label(__('app.settings.notice_text_en'))->columnSpan(3)->rows(4),
                     ]),
             ])
             ->statePath('data');

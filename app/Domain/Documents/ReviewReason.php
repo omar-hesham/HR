@@ -24,6 +24,11 @@ enum ReviewReason: string
     case SuspectedReversed = 'suspected_reversed';
     case DuplicateOfUnreadable = 'duplicate_of_unreadable';
 
+    // Milestone 2 (mail intake).
+    case MalwareDetected = 'malware_detected';
+    case ImageAttachment = 'image_attachment';
+    case UncertainAttachment = 'uncertain_attachment';
+
     public static function translationGroup(): string
     {
         return 'enums.review_reason';

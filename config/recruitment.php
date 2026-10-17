@@ -45,6 +45,18 @@ return [
         'privacy.name_blind_default' => false,
         // M1-P0-05: ID card images are not retained unless the factory approves.
         'privacy.keep_id_card_attachments' => (bool) env('KEEP_ID_CARD_ATTACHMENTS', false),
+
+        // Notice copy is approved by the factory; defaults are seeded from lang (D-114)
+        // and SendPrivacyNotice falls back to lang when these are empty.
+        'privacy.notice_version' => env('PRIVACY_NOTICE_VERSION') ?: '1',
+        'privacy.notice_text_ar' => (string) env('PRIVACY_NOTICE_TEXT_AR', ''),
+        'privacy.notice_text_en' => (string) env('PRIVACY_NOTICE_TEXT_EN', ''),
+
+        // Milestone 2 intake settings.
+        // "No mail received" alert threshold in hours (per-mailbox column overrides).
+        'intake.silence_alert_hours' => (int) env('INTAKE_SILENCE_ALERT_HOURS', 48),
+        // Max one privacy notice per sender within this window (days).
+        'intake.privacy_notice_resend_days' => (int) env('INTAKE_PRIVACY_NOTICE_RESEND_DAYS', 30),
     ],
 
     'extraction' => [
@@ -65,10 +77,66 @@ return [
         'disk' => 'private',
         'documents_prefix' => 'candidates',
         'tmp_prefix' => 'tmp',
+        // Raw .eml files (encrypted) and malware quarantine (Milestone 2).
+        'intake_prefix' => 'intake',
+        'quarantine_prefix' => 'quarantine',
+    ],
+
+    // Pseudonymous sender identity for de-duplication / notice windows (D-115).
+    'hash' => [
+        'dedup_key' => env('DEDUP_HMAC_KEY'),
     ],
 
     'queues' => [
         'extraction' => 'extraction',
+        'intake' => 'intake',
+    ],
+
+    /*
+    | Mail intake (Milestone 2). Providers: m365 | google | imap | fake.
+    | The fake driver reads .eml files from a folder (tests & local only).
+    */
+    'intake' => [
+        'credentials' => [
+            'default' => [
+                'username' => env('MAILBOX_USERNAME'),
+                'password' => env('MAILBOX_PASSWORD'),
+                'tenant_id' => env('MAILBOX_TENANT_ID'),
+                'client_id' => env('MAILBOX_CLIENT_ID'),
+                'client_secret' => env('MAILBOX_CLIENT_SECRET'),
+                'refresh_token' => env('MAILBOX_REFRESH_TOKEN'),
+            ],
+        ],
+        'folder' => env('MAILBOX_FOLDER', 'INBOX'),
+        'poll_minutes' => (int) env('INTAKE_POLL_MINUTES', 5),
+        'max_messages_per_poll' => (int) env('INTAKE_MAX_MESSAGES_PER_POLL', 100),
+        // Per-attachment cap before classification (mail has no upload form).
+        'max_attachment_mb' => (int) env('INTAKE_MAX_ATTACHMENT_MB', 25),
+        'fake_path' => env('MAILBOX_FAKE_PATH', storage_path('app/fake-mailbox')),
+        'image_extensions' => ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'tiff'],
+        // Filename terms (search-normalized) that keep an unknown file out of "other".
+        'cv_filename_terms' => ['cv', 'resume', 'profile'],
+        // OAuth2 token endpoints for the XOAUTH2 providers (M1-P0-04).
+        'm365_token_url' => 'https://login.microsoftonline.com/%s/oauth2/v2.0/token',
+        'google_token_url' => 'https://oauth2.googleapis.com/token',
+        // Dedicated notice mailer (spec §5.3: separate dispatch credentials).
+        'notice_mailer' => env('MAIL_SEND_TRANSPORT') ?: 'array',
+        // Mailbox-silence alerts go here (spec §9.5 HEALTH_ALERT_RECIPIENT); empty disables mail alerts.
+        'health_alert_recipient' => env('HEALTH_ALERT_RECIPIENT'),
+    ],
+
+    /*
+    | Malware scanning (M2-P0-02). "null" disables scanning (local dev has no
+    | clamd); production sets MALWARE_SCANNER=clamav and CLAMAV_SOCKET.
+    */
+    'malware' => [
+        'driver' => env('MALWARE_SCANNER', 'null'),
+        'clamav' => [
+            'socket' => env('CLAMAV_SOCKET', 'unix:///var/run/clamav/clamd.ctl'),
+            'timeout' => (int) env('CLAMAV_TIMEOUT', 30),
+            // clamd INSTREAM chunk size.
+            'chunk_size' => 4096,
+        ],
     ],
 
     /*

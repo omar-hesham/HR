@@ -36,6 +36,15 @@ return [
     */
 
     'mailers' => [
+        'notice' => [
+            'transport' => 'smtp',
+            'scheme' => env('MAIL_SEND_SCHEME', 'smtps'),
+            'host' => env('MAIL_SEND_HOST'),
+            'port' => env('MAIL_SEND_PORT', 465),
+            'username' => env('MAIL_SEND_USERNAME'),
+            'password' => env('MAIL_SEND_PASSWORD'),
+            'timeout' => 30,
+        ],
 
         'smtp' => [
             'transport' => 'smtp',
@@ -82,6 +91,15 @@ return [
         'failover' => [
             'transport' => 'failover',
             'mailers' => [
+                'notice' => [
+                    'transport' => 'smtp',
+                    'scheme' => env('MAIL_SEND_SCHEME', 'smtps'),
+                    'host' => env('MAIL_SEND_HOST'),
+                    'port' => env('MAIL_SEND_PORT', 465),
+                    'username' => env('MAIL_SEND_USERNAME'),
+                    'password' => env('MAIL_SEND_PASSWORD'),
+                    'timeout' => 30,
+                ],
                 'smtp',
                 'log',
             ],
@@ -91,6 +109,15 @@ return [
         'roundrobin' => [
             'transport' => 'roundrobin',
             'mailers' => [
+                'notice' => [
+                    'transport' => 'smtp',
+                    'scheme' => env('MAIL_SEND_SCHEME', 'smtps'),
+                    'host' => env('MAIL_SEND_HOST'),
+                    'port' => env('MAIL_SEND_PORT', 465),
+                    'username' => env('MAIL_SEND_USERNAME'),
+                    'password' => env('MAIL_SEND_PASSWORD'),
+                    'timeout' => 30,
+                ],
                 'ses',
                 'postmark',
             ],

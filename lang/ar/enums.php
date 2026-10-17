@@ -13,6 +13,7 @@ return [
         'cv' => 'سيرة ذاتية',
         'supporting_document' => 'مستند داعم',
         'uncertain' => 'غير محدد',
+        'other' => 'أخرى',
     ],
     'document_status' => [
         'pending' => 'في الانتظار',
@@ -40,6 +41,9 @@ return [
         'low_quality' => 'جودة نص منخفضة',
         'suspected_reversed' => 'اشتباه في نص عربي معكوس',
         'duplicate_of_unreadable' => 'مكرر لملف غير مقروء',
+        'malware_detected' => 'برمجية خبيثة (معزولة)',
+        'image_attachment' => 'مرفق صورة (محال للمراجعة)',
+        'uncertain_attachment' => 'مرفق غير محدد (محال للمراجعة)',
     ],
     'application_status' => [
         'received' => 'مستلم',
@@ -125,5 +129,24 @@ return [
         'exempted' => 'معفى',
         'postponed' => 'مؤجل',
         'not_applicable' => 'لا ينطبق',
+    ],
+    'intake_outcome' => [
+        'pending' => 'قيد المعالجة',
+        'processed' => 'تمت المعالجة',
+        'ignored_with_reason' => 'متجاهل (مع سبب)',
+        'needs_review' => 'يحتاج مراجعة',
+    ],
+    'intake_reason' => [
+        'cv_processed' => 'تم استلام سيرة ذاتية ومعالجتها',
+        'duplicate_message' => 'رسالة مكررة (نفس معرف الرسالة)',
+        'parse_failed' => 'تعذر تحليل الرسالة',
+        'no_attachments' => 'لا توجد مرفقات',
+        'no_cv_attachment' => 'لا توجد سيرة ذاتية بالمرفقات',
+    ],
+    'attachment_class' => [
+        'cv' => 'سيرة ذاتية',
+        'image' => 'صورة',
+        'uncertain' => 'غير محدد',
+        'other' => 'أخرى',
     ],
 ];
