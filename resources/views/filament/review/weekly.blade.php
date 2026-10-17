@@ -19,7 +19,7 @@
             <article>{{ __('review.active_users') }}<div class="review-number">{{ $data['active_users'] }} {{ __('review.units.users') }}</div></article>
             <article>{{ __('review.cloud_cap') }}<div class="review-number">{{ $data['cloud'] }} / {{ $data['cap'] }} {{ __('review.units.egp') }}</div></article>
             <article>{{ __('review.pilot_time') }}<div class="review-number">{{ $data['pilot'] ?? '—' }} {{ __('review.minutes') }}</div></article>
-            <article>{{ __('review.backup_health') }}<div class="review-muted">{{ __('review.backup_pending') }}</div></article>
+            <article>{{ __('review.backup_health') }}<div class="review-muted">{{ ! $data['backup']['configured'] ? __('review.backup_pending') : ($data['backup']['fresh'] ? __('ops.backup_fresh') : __('ops.backup_stale')) }}</div></article>
         </div>
     </x-filament::section>
     <x-filament::section :heading="__('review.visibility_all')">

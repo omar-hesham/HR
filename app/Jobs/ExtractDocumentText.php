@@ -110,6 +110,10 @@ final class ExtractDocumentText implements ShouldBeUnique, ShouldQueue
         $report = (new TextQualityChecker(Wordlist::default()))->check($normalized->text, $settings->qualityThresholds());
 
         DB::transaction(function () use ($document, $extracted, $normalized, $report): void {
+            $existing = Document::query()->whereKey($document->id)->lockForUpdate()->first();
+            if ($existing === null || $existing->path === null) {
+                return;
+            }
             Extraction::query()->create([
                 'document_id' => $document->id,
                 'extractor' => $extracted->extractor,
@@ -169,6 +173,9 @@ final class ExtractDocumentText implements ShouldBeUnique, ShouldQueue
     private function recordFailure(Document $document, ReviewReason $reason, ApplicationStatusService $statuses): void
     {
         DB::transaction(function () use ($document, $reason): void {
+            if (! Document::query()->whereKey($document->id)->lockForUpdate()->exists()) {
+                return;
+            }
             Extraction::query()->create([
                 'document_id' => $document->id,
                 'extractor' => $document->extension === 'pdf' ? 'pdftotext' : 'phpword',

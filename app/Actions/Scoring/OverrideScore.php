@@ -23,6 +23,7 @@ final class OverrideScore
             $locked = Score::query()->whereKey($score->id)->lockForUpdate()->firstOrFail();
             $previous = $locked->overrides()->latest('id')->first();
             $override = $locked->overrides()->create(['user_id' => $actor->id, 'old_value' => $previous->new_value ?? $locked->score, 'new_value' => number_format((float) $value, 2, '.', ''), 'reason_enc' => $reason]);
+            $application->forceFill(['last_activity_at' => now()])->save();
             activity('review')->causedBy($actor)->performedOn($locked)->event('score.overridden')->withProperties(['override_id' => $override->id])->log('score.overridden');
 
             return $override;

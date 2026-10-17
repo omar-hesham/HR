@@ -1,0 +1,1 @@
+<section>@foreach($runs as $run)<p>#{{ $run->id }} — {{ __('ops.backup_states.'.$run->status) }} — {{ $run->getAttribute('finished_at')?->format('d/m/Y H:i') ?? '—' }} — {{ $run->getAttribute('restore_test_at')?->format('d/m/Y H:i') ?? __('ops.unknown') }}</p>@endforeach</section>

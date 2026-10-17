@@ -9,11 +9,13 @@ use App\Domain\Documents\DocumentStatus;
 use App\Domain\Documents\FileSignature;
 use App\Domain\Documents\ReviewReason;
 use App\Domain\Documents\SourceChannel;
+use App\Domain\Intake\SenderHmac;
 use App\Domain\Privacy\RetentionTrack;
 use App\Infrastructure\Storage\EncryptedDocumentStore;
 use App\Jobs\ExtractDocumentText;
 use App\Models\Application;
 use App\Models\Candidate;
+use App\Models\DeletionLedgerEntry;
 use App\Models\Document;
 use App\Models\DocumentSource;
 use App\Models\RecruitmentJob;
@@ -54,6 +56,11 @@ final class StoreCvFile
         ?string $externalReference = null,
         ?ReviewReason $receiptError = null,
     ): StoreOutcome {
+        if (DeletionLedgerEntry::query()->where('source_hmac', app(SenderHmac::class)->hash('document:'.hash('sha256', $bytes)))->exists()) {
+            $source = DocumentSource::query()->create(['source' => $channel, 'attachment_key' => (string) Str::uuid(), 'attachment_kind' => DocumentKind::Cv, 'disposition' => Disposition::Excluded, 'reason' => 'data_erased']);
+
+            return new StoreOutcome($source->id, Disposition::Excluded, null, 'data_erased');
+        }
         $extension = strtolower(pathinfo($originalFilename, PATHINFO_EXTENSION));
         if ($channel === SourceChannel::Email && $extension === '') {
             $extension = FileSignature::detect($bytes) ?? '';
@@ -160,11 +167,11 @@ final class StoreCvFile
         try {
             $applicationId = null;
 
-            DB::transaction(function () use ($bytes, $sha256, $extension, $source, $channel, $actor, $job, $externalReference, $candidateUuid, $documentUuid, $path, &$applicationId): void {
+            DB::transaction(function () use ($bytes, $sha256, $extension, $source, $actor, $job, $candidateUuid, $documentUuid, $path, &$applicationId): void {
                 $candidate = Candidate::query()->create([
                     'uuid' => $candidateUuid,
-                    'received_at' => now(),
-                    'retention_hard_due_at' => now()->addDays($this->settings->int('retention.hard_max_days')),
+                    'received_at' => $source->intakeMessage->received_at ?? now(),
+                    'retention_hard_due_at' => ($source->intakeMessage->received_at ?? now())->copy()->addDays($this->settings->int('retention.hard_max_days')),
                 ]);
 
                 $document = Document::query()->create([
@@ -181,7 +188,7 @@ final class StoreCvFile
                 ]);
 
                 $candidate->forceFill(['active_document_id' => $document->id])->save();
-                $application = $this->createApplication($candidate, $job, $channel, $actor, $externalReference);
+                $application = $this->createApplication($candidate, $job, $actor, $source);
                 $applicationId = $application->id;
 
                 $source->forceFill([
@@ -207,7 +214,7 @@ final class StoreCvFile
         $applicationId = null;
         $created = false;
 
-        DB::transaction(function () use ($document, $source, $channel, $actor, $job, $externalReference, &$applicationId, &$created): void {
+        DB::transaction(function () use ($document, $source, $actor, $job, &$applicationId, &$created): void {
             $candidate = $document->candidate;
 
             $application = $candidate === null ? null : $candidate->applications()
@@ -216,7 +223,7 @@ final class StoreCvFile
                 ->first();
 
             if ($candidate !== null && $application === null) {
-                $application = $this->createApplication($candidate, $job, $channel, $actor, $externalReference);
+                $application = $this->createApplication($candidate, $job, $actor, $source);
                 $this->syncWithDocument($application, $document);
                 $created = true;
             }
@@ -246,17 +253,17 @@ final class StoreCvFile
         );
     }
 
-    private function createApplication(Candidate $candidate, ?RecruitmentJob $job, SourceChannel $channel, ?User $actor, ?string $externalReference): Application
+    private function createApplication(Candidate $candidate, ?RecruitmentJob $job, ?User $actor, DocumentSource $source): Application
     {
         $application = Application::query()->create([
             'uuid' => (string) Str::uuid(),
             'candidate_id' => $candidate->id,
             'recruitment_job_id' => $job?->id,
-            'source' => $channel,
-            'external_reference' => $externalReference,
+            'source' => $source->source,
+            'external_reference' => $source->external_reference,
             'status' => ApplicationStatus::Received,
-            'received_at' => now(),
-            'last_activity_at' => now(),
+            'received_at' => $source->intakeMessage->received_at ?? now(),
+            'last_activity_at' => $source->intakeMessage->received_at ?? now(),
             'retention_track' => RetentionTrack::Applicant,
             'created_by' => $actor?->id,
         ]);

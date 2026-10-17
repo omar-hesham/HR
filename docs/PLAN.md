@@ -484,3 +484,57 @@ Unicode/XSS-safe highlights, duplicate actions/history, status/notes/correction/
 scope revocation/expiry/audits, weekly reconciliation and explicit units. Then PHP 8.4 lint, stan, complete tests
 and migrate:fresh --seed on a NEW isolated synthetic SQLite database. No .env changes or live services.
 Exact results and walkthrough are recorded in `docs/M4A-VERIFICATION.md`: 499 passed, 1 existing skip, 2149 assertions; all four gates green.
+# Milestone 4b — Privacy, operations and go-live
+
+Scope: items 10–17 only on `m4b-privacy-ops`, reusing M4a c048afc. No deployment,
+live services, real CVs, package additions, commits or secret changes.
+
+## Plan and flow (steps 1–4)
+
+1. Add privacy lifecycle, durable erasure cleanup, retention notices and calibration schema.
+2. Implement one transactional DeleteCandidateData action, alias traversal, shared-source
+   protection, retention clocks and daily sweep; hook hired track into the status service.
+3. Build scoped privacy requests and subject exports, processing record and owner due list.
+4. Implement portable encrypted logical database/file backups and isolated restore with
+   integrity comparison followed by current ledger replay before an OPEN marker is written.
+5. Unify operational health, permission-checked retry, backup alerts and KPI backup health.
+6. Implement blind per-job calibration, locked inputs, tie-aware metrics and week-3 decisions.
+7. Write Arabic operations/user guides, rollback/deployment log and machine go-live checks.
+8. Test synthetic boundaries and permissions; review code/docs; run all four gates with
+   PHP 8.4, using a NEW local SQLite database for migrate:fresh --seed.
+
+```mermaid
+flowchart TD
+    A["Daily retention sweep"] --> B["Compute immutable first-decision / activity clock"]
+    B --> C{"Hard cap or handed-over hired expiry?"}
+    C -->|"No"| D{"Ordinary expiry; active?"}
+    D -->|"Yes"| E["Owner-only due list; preserve shared files"]
+    D -->|"No; ended / idle"| F["Delete application-specific data"]
+    C -->|"Yes"| G["DeleteCandidateData; cap follows original identity receipt"]
+    H["Register rights request"] --> I["Proportionate verification; authorized decision"]
+    I -->|"Approved erasure"| G
+    I -->|"Access / rectification"| J["Encrypted subject artifact / existing correction action"]
+    G --> K["Transaction: scrub identity, descendants and audit text; ledger + purge queue"]
+    F --> K
+    K --> L["Retry file cleanup; no resurrection from stale work"]
+    M["Nightly encrypted DB + private files backup"] --> N["Isolated restore; compare DB/files/audit"]
+    N --> O["Replay latest external ledger; scrub restored artifacts"]
+    O --> P["Write OPEN marker only after purge completes; record drill"]
+    Q["Blind manager inputs per job"] --> R["Lock all inputs before exposing snapshot ranking"]
+    R --> S["Top-5 / tie-aware Spearman / missed suitable"]
+    S --> T["Immutable week-3 approval or rules-only fallback"]
+```
+
+Self-review: preserve merged-alias original receipt; never reset final-decision clocks;
+all six active statuses bypass ordinary deletion; source messages can contain multiple
+people so raw messages must be erased when any included identity is erased while other
+already-extracted applications remain. Scrub free-text audit properties as well as models.
+Files cannot participate in DB rollback: persist opaque purge tasks and withhold completion
+on failure. Restores require the CURRENT ledger supplied separately from an old backup.
+Calibration snapshots cannot mix jobs/versions; results stay hidden until the blind batch
+is complete. No automated candidate notifications are added. Plan revised accordingly.
+
+File map: [NEW] Privacy/Operations/Calibration domain/services/actions, M4b migration,
+Filament resource/pages/views, artisan commands, lang/{ar,en}/ops.php, M4b tests and docs.
+[MODIFY] status service, extraction deletion checks, role grants, scheduler, configuration,
+weekly KPI hook. No M4a review behavior is redesigned.

@@ -30,6 +30,11 @@ class AiOperations extends Page
     /** @var array<string,mixed>|null */
     public ?array $data = [];
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return static::class === SystemHealth::class;
+    }
+
     public static function getNavigationLabel(): string
     {
         return __('ai.title');

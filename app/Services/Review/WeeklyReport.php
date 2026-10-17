@@ -10,6 +10,7 @@ use App\Models\IntakeMessage;
 use App\Models\Score;
 use App\Models\User;
 use App\Services\Ai\CostMeter;
+use App\Services\Operations\Backups;
 use App\Services\Settings\SettingsRepository;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -36,7 +37,7 @@ final class WeeklyReport
         $counts = [
             'intake' => (clone $messages)->whereBetween('received_at', [$start, $end])->count(),
             'files' => (clone $sources)->whereBetween('created_at', [$start, $end])->count(),
-            'candidates' => Candidate::query()->when(! $global, fn (Builder $query) => $query->whereIn('id', (clone $applications)->select('candidate_id')))
+            'candidates' => Candidate::query()->whereNull('erased_at')->when(! $global, fn (Builder $query) => $query->whereIn('id', (clone $applications)->select('candidate_id')))
                 ->whereBetween('received_at', [$start, $end])->count(),
             'applications' => (clone $applications)->whereBetween('received_at', [$start, $end])->count(),
             'duplicates' => (clone $sources)->where('disposition', 'duplicate_linked')->whereBetween('created_at', [$start, $end])->count(),
@@ -59,6 +60,7 @@ final class WeeklyReport
             'pending' => count(array_filter($visibility, fn (array $row): bool => $row['pending'])),
             'active_users' => $active, 'cloud' => app(CostMeter::class)->spentUnits(now()->format('Y-m')) / 10000,
             'cap' => app(SettingsRepository::class)->float('ai.monthly_cap_egp'), 'pilot' => $pilot, 'global' => $global,
+            'backup' => app(Backups::class)->health(),
             'week_start' => $start->copy()->timezone('Africa/Cairo')->format('d/m/Y'), 'week_end' => $end->copy()->timezone('Africa/Cairo')->format('d/m/Y')];
     }
 

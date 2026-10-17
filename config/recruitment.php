@@ -44,6 +44,12 @@ return [
 
         // Kickoff §5.6 default for new jobs; per-user and per-job flags override to "on".
         'privacy.name_blind_default' => false,
+        'processing.purpose' => '', 'processing.categories' => '', 'processing.recipients' => '',
+        'processing.storage_location' => '', 'processing.controller' => '', 'processing.rights_channel' => '', 'processing.dpo' => '',
+        'operations.criteria_approval_ref' => '', 'operations.accounts_approval_ref' => '', 'operations.ai_path_decision' => '',
+        'operations.retention_approval_ref' => '', 'operations.notice_approval_ref' => '', 'operations.backup_cycle_approval_ref' => '',
+        'operations.residency_approval_ref' => '', 'operations.support_owner' => '', 'operations.recovery_owner' => '', 'operations.approver' => '',
+
         // M1-P0-05: ID card images are not retained unless the factory approves.
         'privacy.keep_id_card_attachments' => (bool) env('KEEP_ID_CARD_ATTACHMENTS', false),
 

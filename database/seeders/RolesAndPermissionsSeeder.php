@@ -23,12 +23,18 @@ class RolesAndPermissionsSeeder extends Seeder
         }
 
         PermissionModel::findOrCreate('ai.pipeline.manage', 'web');
+        PermissionModel::findOrCreate('jobs.retry', 'web');
+        PermissionModel::findOrCreate('backups.manage', 'web');
+        PermissionModel::findOrCreate('calibration.manage', 'web');
 
         foreach (Role::cases() as $role) {
             RoleModel::findOrCreate($role->value, 'web')
                 ->syncPermissions(array_map(static fn (Permission $p): string => $p->value, $role->permissions()));
         }
 
+        RoleModel::findByName('owner')->givePermissionTo(['jobs.retry', 'backups.manage', 'calibration.manage']);
+        RoleModel::findByName('operator')->givePermissionTo(['jobs.retry', 'backups.manage']);
+        RoleModel::findByName('hiring_manager')->givePermissionTo('calibration.manage');
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }
 }

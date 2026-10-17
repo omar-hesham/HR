@@ -15,12 +15,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class PrivacyRequest extends Model
 {
-    protected $fillable = ['candidate_id', 'type', 'status', 'details_enc', 'verified_at', 'approved_by', 'completed_at'];
+    protected $fillable = ['candidate_id', 'type', 'status', 'details_enc', 'verified_at', 'approved_by', 'completed_at', 'requested_by', 'verification_enc', 'decision_enc', 'channel_enc', 'notification_enc', 'notified_at', 'decided_at'];
 
     protected function casts(): array
     {
         return [
             'details_enc' => 'encrypted',
+            'verification_enc' => 'encrypted', 'decision_enc' => 'encrypted', 'channel_enc' => 'encrypted', 'notification_enc' => 'encrypted',
+            'notified_at' => 'datetime', 'decided_at' => 'datetime',
             'verified_at' => 'datetime',
             'completed_at' => 'datetime',
         ];

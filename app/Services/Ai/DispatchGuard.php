@@ -6,6 +6,7 @@ use App\Domain\Ai\AiDeferred;
 use App\Domain\Ai\AiError;
 use App\Domain\Ai\AiException;
 use App\Domain\Ai\DispatchContext;
+use App\Models\Application;
 use App\Services\Settings\SettingsRepository;
 
 final readonly class DispatchGuard
@@ -14,6 +15,9 @@ final readonly class DispatchGuard
 
     public function check(DispatchContext $context, string $purpose, bool $masked = true): void
     {
+        if ($context->applicationId !== null && Application::query()->find($context->applicationId)?->job?->getAttribute('rules_only')) {
+            throw new AiDeferred('human_verification_required');
+        }
         $this->settings->flush();
         if (! $this->settings->bool('ai.enabled')) {
             throw new AiDeferred('awaiting_service');

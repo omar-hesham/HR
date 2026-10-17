@@ -6,9 +6,11 @@ use App\Domain\Access\ReviewAccess;
 use App\Domain\Applications\ApplicationStatus;
 use App\Domain\Applications\StatusTransitionGuard;
 use App\Domain\Documents\ReviewReason;
+use App\Domain\Privacy\RetentionTrack;
 use App\Models\Application;
 use App\Models\StatusEvent;
 use App\Models\User;
+use App\Services\Privacy\RetentionPolicy;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -51,6 +53,11 @@ final class ApplicationStatusService
             if ($to->isFinalDecision() && $application->final_decision_at === null) {
                 $application->final_decision_at = now();
             }
+
+            if ($to === ApplicationStatus::Hired) {
+                $application->retention_track = RetentionTrack::HiredHandover;
+            }
+            $application->retention_due_at = app(RetentionPolicy::class)->due($application);
 
             $application->save();
 

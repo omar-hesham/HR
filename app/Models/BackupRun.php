@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class BackupRun extends Model
 {
-    protected $fillable = ['started_at', 'finished_at', 'status', 'manifest_hash', 'location_ref', 'restore_test_at'];
+    protected $fillable = ['started_at', 'finished_at', 'status', 'manifest_hash', 'location_ref', 'restore_test_at', 'restore_engine'];
 
     protected function casts(): array
     {

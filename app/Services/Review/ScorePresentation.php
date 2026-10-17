@@ -21,7 +21,7 @@ final class ScorePresentation
             $all = [...$all, ...$evidence];
             $rows[] = ['criterion' => $result->criterion, 'result' => $result->result, 'confidence' => $result->confidence, 'source' => $result->source, 'evidence' => $evidence];
         }
-        $enrichment = DB::table('score_explanations')->where('score_id', $score->id)->value('body_enc');
+        $enrichment = $score->application->job?->getAttribute('rules_only') ? null : DB::table('score_explanations')->where('score_id', $score->id)->value('body_enc');
 
         return ['score' => $score, 'rows' => $rows, 'enrichment' => is_string($enrichment) ? app(ContentEncrypter::class)->decryptString($enrichment) : null,
             'preview' => app(EvidencePreview::class)->render($score->extraction?->normalizedText() ?? '', $all, $score->extraction->document_id ?? 0)];

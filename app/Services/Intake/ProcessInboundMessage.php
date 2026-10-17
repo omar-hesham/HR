@@ -18,6 +18,7 @@ use App\Domain\Intake\JobResolver;
 use App\Domain\Intake\MessageParseFailure;
 use App\Domain\Intake\SenderHmac;
 use App\Infrastructure\Storage\EncryptedDocumentStore;
+use App\Models\DeletionLedgerEntry;
 use App\Models\DocumentSource;
 use App\Models\IntakeMessage;
 use App\Models\Mailbox;
@@ -51,6 +52,9 @@ final class ProcessInboundMessage
     public function process(Mailbox $mailbox, string $externalId, string $raw, ?Carbon $receivedAt = null): ProcessedMessageResult
     {
         $rawSha256 = hash('sha256', $raw);
+        if (DeletionLedgerEntry::query()->where('source_hmac', $this->senderHmac->hash('message:'.$rawSha256))->exists()) {
+            return ProcessedMessageResult::skipped('data_erased');
+        }
 
         $message = IntakeMessage::query()
             ->where('mailbox_id', $mailbox->id)->where('external_id', $externalId)->first();

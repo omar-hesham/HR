@@ -39,6 +39,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $review_note_enc
  * @property Carbon $created_at
  * @property-read Document|null $document
+ * @property-read IntakeMessage|null $intakeMessage
  * @property-read Application|null $application
  * @property-read User|null $uploader
  */

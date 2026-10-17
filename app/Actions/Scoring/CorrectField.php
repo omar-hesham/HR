@@ -47,6 +47,7 @@ final class CorrectField
                 data_set($fields, $previous->path, json_decode($previous->after_enc, true, 512, JSON_THROW_ON_ERROR));
             }
             $row = FieldCorrection::query()->create(['application_id' => $application->id, 'extraction_id' => $extraction->id, 'path' => $path, 'before_enc' => json_encode(data_get($fields, $path), JSON_THROW_ON_ERROR), 'after_enc' => json_encode($fact, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), 'user_id' => $actor->id, 'source' => $source, 'reason_enc' => $reason]);
+            $locked->forceFill(['last_activity_at' => now()])->save();
             activity('review')->causedBy($actor)->performedOn($application)->event('field.corrected')->withProperties(['correction_id' => $row->id, 'path' => $path])->log('field.corrected');
 
             return $row;

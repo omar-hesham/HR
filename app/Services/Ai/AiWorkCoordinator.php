@@ -71,7 +71,7 @@ final readonly class AiWorkCoordinator
     public function explanation(int $scoreId): void
     {
         $score = Score::query()->find($scoreId);
-        if ($score === null) {
+        if ($score === null || $score->application->job?->getAttribute('rules_only')) {
             return;
         }
         $work = AiWorkItem::query()->firstOrCreate(['idempotency_key' => hash('sha256', 'explain:'.$scoreId)], ['purpose' => 'explain', 'score_id' => $scoreId, 'application_id' => $score->application_id, 'document_id' => $score->extraction?->document_id, 'state' => 'waiting', 'reason' => 'awaiting_service']);

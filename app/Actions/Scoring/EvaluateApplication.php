@@ -19,6 +19,7 @@ use App\Models\FieldCorrection;
 use App\Models\Score;
 use App\Services\Ai\AiWorkCoordinator;
 use App\Services\Applications\ApplicationStatusService;
+use App\Services\Calibration\HumanFieldVerification;
 use Illuminate\Support\Facades\DB;
 
 final readonly class EvaluateApplication
@@ -40,6 +41,9 @@ final readonly class EvaluateApplication
             if ($extraction === null) {
                 return null;
             }
+            if ($app->job->getAttribute('rules_only') && ! app(HumanFieldVerification::class)->valid($app, $extraction)) {
+                return null;
+            }
             $version = CriteriaVersion::query()->whereKey($versionId ?? $app->job->current_criteria_version_id)->where('recruitment_job_id', $app->recruitment_job_id)->first();
             if ($version === null) {
                 return null;
@@ -49,7 +53,7 @@ final readonly class EvaluateApplication
             foreach ($corrections as $correction) {
                 data_set($fields, $correction->path, json_decode($correction->after_enc, true, 512, JSON_THROW_ON_ERROR));
             }
-            $key = hash('sha256', json_encode([$app->id, $version->id, $extraction->id, RulesEngine::VERSION, $fields, $version->thresholds, $corrections->pluck('id')->all()], JSON_THROW_ON_ERROR));
+            $key = hash('sha256', json_encode([$app->id, $version->id, $extraction->id, (bool) $app->job->getAttribute('rules_only'), RulesEngine::VERSION, $fields, $version->thresholds, $corrections->pluck('id')->all()], JSON_THROW_ON_ERROR));
             $existing = DB::table('evaluation_keys')->where('idempotency_key', $key)->value('score_id');
             if ($existing !== null) {
                 return Score::query()->find($existing);

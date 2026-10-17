@@ -23,6 +23,11 @@ class IntakeHealth extends Page
 
     protected static ?string $slug = 'intake-health';
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
     public static function getNavigationLabel(): string
     {
         return __('app.intake.title');

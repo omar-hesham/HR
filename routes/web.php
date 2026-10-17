@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DocumentDownloadController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\PrivacyArtifactController;
 use App\Http\Controllers\ReviewExportController;
 use App\Http\Middleware\ApplyUserLocale;
 use App\Http\Middleware\EnsureAccountUsable;
@@ -15,6 +16,8 @@ Route::middleware(['auth', EnsureAccountUsable::class, ApplyUserLocale::class])-
 
     Route::get('/review-exports/{export}/download', ReviewExportController::class)
         ->name('review-exports.download');
+
+    Route::get('/privacy-artifacts/{artifact}/download', PrivacyArtifactController::class)->name('privacy-artifacts.download');
 
     Route::get('/locale/{locale}', LocaleController::class)
         ->whereIn('locale', ['ar', 'en'])
