@@ -42,6 +42,7 @@ class Candidate extends Model
         'phone_hmac',
         'search_normalized',
         'active_document_id',
+        'merged_into_id',
         'received_at',
         'retention_hard_due_at',
         'retention_notice_at',

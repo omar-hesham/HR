@@ -30,6 +30,14 @@ return [
 
     'disks' => [
 
+        'review_exports' => [
+            'driver' => 'local',
+            'root' => storage_path('private/exports'),
+            'serve' => false,
+            'visibility' => 'private',
+            'throw' => true,
+        ],
+
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),

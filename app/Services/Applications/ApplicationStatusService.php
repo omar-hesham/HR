@@ -2,6 +2,7 @@
 
 namespace App\Services\Applications;
 
+use App\Domain\Access\ReviewAccess;
 use App\Domain\Applications\ApplicationStatus;
 use App\Domain\Applications\StatusTransitionGuard;
 use App\Domain\Documents\ReviewReason;
@@ -25,15 +26,21 @@ final class ApplicationStatusService
         ?string $reason = null,
         ?ReviewReason $reviewReason = null,
     ): void {
-        $from = $application->status;
-
-        if ($from === $to) {
-            return;
-        }
-
-        $this->guard->assertAllowed($from, $to, $actor !== null, $reason);
-
-        DB::transaction(function () use ($application, $from, $to, $actor, $reason, $reviewReason): void {
+        DB::transaction(function () use ($application, $to, $actor, $reason, $reviewReason): void {
+            $locked = Application::query()->whereKey($application->id)->lockForUpdate()->firstOrFail();
+            $application->setRawAttributes($locked->getAttributes(), true);
+            $from = $application->status;
+            if ($from === $to) {
+                return;
+            }
+            // Existing extraction-retry actions explicitly authorize their pipeline operation.
+            if ($actor !== null && $from->requiresHuman($to)) {
+                abort_unless(ReviewAccess::transition($actor, $application, $to), 403);
+            }
+            if ($actor !== null && ! $from->requiresHuman($to)) {
+                abort_unless($to === ApplicationStatus::Processing && ReviewAccess::manage($actor, $application), 403);
+            }
+            $this->guard->assertAllowed($from, $to, $actor !== null, $reason);
             $application->status = $to;
             $application->review_reason = $to === ApplicationStatus::NeedsReview ? $reviewReason : null;
 

@@ -4,6 +4,7 @@ namespace App\Actions\Scoring;
 
 use App\Domain\Access\Permission;
 use App\Domain\Ai\EvidenceVerifier;
+use App\Domain\Applications\ApplicationStatus;
 use App\Jobs\ScoreApplication;
 use App\Models\Application;
 use App\Models\Extraction;
@@ -18,7 +19,7 @@ final class CorrectField
      * @param array<string,mixed> $fact */
     public function handle(Application $application, Extraction $extraction, string $path, array $fact, User $actor, string $reason, string $source = 'human_correction'): FieldCorrection
     {
-        abort_unless($actor->can('view', $application) && $actor->hasPermission(Permission::ReviewManage), 403);
+        abort_unless($actor->isUsable() && $application->status !== ApplicationStatus::Deleted && $actor->can('view', $application) && $actor->hasPermission(Permission::ReviewManage), 403);
         abort_if(trim($reason) === '' || ! in_array($source, ['human_correction', 'human_answer'], true), 422);
         abort_unless($extraction->document_id === $application->candidate->active_document_id && $extraction->fields_json_enc !== null, 422);
         // Corrections cannot introduce protected fields or location, even through nested paths.
@@ -38,7 +39,9 @@ final class CorrectField
         }
         $fact['source'] = $source;
         $correction = DB::transaction(function () use ($application, $extraction, $path, $fact, $actor, $reason, $source): FieldCorrection {
-            Application::query()->whereKey($application->id)->lockForUpdate()->firstOrFail();
+            $locked = Application::query()->whereKey($application->id)->lockForUpdate()->firstOrFail();
+            abort_unless($actor->can('view', $locked) && $locked->status !== ApplicationStatus::Deleted
+                && $locked->candidate->active_document_id === $extraction->document_id, 403);
             $fields = json_decode($extraction->fields_json_enc ?? '{}', true, 512, JSON_THROW_ON_ERROR);
             foreach (FieldCorrection::query()->where('application_id', $application->id)->where('extraction_id', $extraction->id)->orderBy('id')->get() as $previous) {
                 data_set($fields, $previous->path, json_decode($previous->after_enc, true, 512, JSON_THROW_ON_ERROR));

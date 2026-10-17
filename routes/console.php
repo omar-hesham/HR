@@ -13,6 +13,8 @@ Artisan::command('inspire', function () {
 // M1-P0-01: poll every 5 minutes (each job is overlap-locked per mailbox).
 Schedule::command('recruit:poll-mailboxes')->everyFiveMinutes();
 
+Schedule::command('recruit:purge-review-exports')->everyMinute()->withoutOverlapping();
+
 // Brief §7: "no mail received in N hours" alert (N in settings, per-mailbox override).
 Schedule::job(new MonitorMailboxSilence)->hourly();
 

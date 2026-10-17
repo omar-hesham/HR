@@ -412,3 +412,75 @@ Local model endpoint acceptance and calibration stay open for staging in Egypt; 
   HTTP responses only. The existing M1/M2 tests remain unchanged.
 
 Final gate evidence and remaining acceptance limits are recorded in `docs/M3-VERIFICATION.md`.
+
+---
+
+# Milestone 4a — Review and decisions
+
+Status: complete after Steps 1–7 on 17/10/2026; offline gates passed. See docs/M4A-VERIFICATION.md.
+Branch: `m4a-review-decisions`, based on `76f9a4d`. Scope: brief items 1–9 only.
+Sources: kickoff sections 3–8; spec v0.2 sections 5.2/5.4, M6–M9, 7.4, 8,
+9.3–9.5, 11–13, 15–17 and Appendix B; M3 verification; M4a brief overrides.
+M4b remains separate: no retention/deletion/privacy/backup/health/calibration/go-live implementation.
+
+## M4a.1 Plan and flow (Steps 1–2)
+
+Deliver the complete synthetic weekly decision routine: scoped current-version ranking,
+persistent exceptions, evidence/profile/history, same-job/version comparison, reasoned duplicate
+resolution, authorized human statuses/notes/corrections/overrides, encrypted audited XLSX/CSV,
+and an in-tool PII-free weekly summary/KPIs with voluntary pilot minutes.
+
+```mermaid
+flowchart TD
+    A["Authenticated MFA user"] --> P{"Application policy and job scope"}
+    P -->|"Denied"| NO["403 or scoped 404; no data or mutation"]
+    P -->|"Allowed"| L["Per-job current-version ranking; pinned unscored and needs-review sections"]
+    L --> OLD["Old version or inactive document: unranked; authorized rescore"]
+    OLD --> Q["Existing RescoreApplication; immutable score history"]
+    L --> D["Detail: evidence anchors, normalized preview, reasons, history and internal notes"]
+    L --> C{"Select 2–3 authorized applications with same job and version"}
+    C -->|"Mismatch"| ERR["Translated validation error"]
+    C -->|"Valid"| COMP["Name-blind comparison with redacted quoted evidence"]
+    D --> H{"Authorized human action and required reason"}
+    H --> ST["ApplicationStatusService; append status event"]
+    H --> CO["Existing CorrectField / OverrideScore; append audit trail"]
+    L --> DUP["Shared contact HMAC queue; never name-only matching"]
+    DUP --> BOTH{"Authority over all applications for both identities; reason"}
+    BOTH --> R["Keep separate / merge / append and activate CV; preserve history and link ledger"]
+    R --> Q
+    L --> E{"Export scope, name-blind and recent broad-export password confirmation"}
+    E --> EX["Minimal sanitized RTL XLSX or BOM CSV; encrypt; expire at 24 hours; audit downloads"]
+    L --> W["Scoped weekly summary and KPIs with stored counting units; no PII or email"]
+```
+
+## M4a.2 Self-review and revised file plan (Steps 3–4)
+
+| Risk found | Revised implementation |
+|---|---|
+| Band/date/status filters can conceal unscored items | Separate paginated pinned exceptions query ignores list filters; counts always visible |
+| Old score can reference the current version but a replaced CV | Ranking additionally checks active document; historical score remains unranked |
+| Evidence can leak identity under name-blind | Redact identity tokens from comparison evidence; never render raw normalized text there |
+| A duplicate merge can affect hidden applications | Require review.manage and visibility of every linked application for both candidates, rechecked under locks |
+| Merge can destroy same-job score history | Reparent applications without collapsing/deleting them; preserve opaque alias and append link snapshots |
+| UI-only restrictions permit forged status actions | Policy checks in the sole status service, lock before transition; owner-only reopen |
+| Export can bypass scope after revocation or changed blind flags | Recheck creator, permissions, every included application and blind flags at download |
+| Export plaintext or long-lived download URL | Dedicated private encrypted disk, authenticated route, 24-hour expiry and per-minute expiry cleanup |
+| Weekly counts mix message/file/person/application units | Stored metric definitions and separate counts; distinct application counts for score/review/decision events |
+
+- [MODIFY] Application resource/list and existing ranking helper; [NEW] detail and compare pages/views.
+- [NEW] `Services/Review`, `Actions/Review`, review policy helpers, duplicate link ledger/model.
+- [MODIFY] status service and correction/override authorization, model relations; preserve M1–M3 behavior.
+- [NEW] export service/artifact model, controller, cleanup command, private disk and routes.
+- [NEW] weekly report/KPI service, page, manual pilot log and metric-unit definitions.
+- [NEW] additive M4a Schema API migration (duplicate resolutions, export artifacts, pilot logs, metric definitions,
+  candidate merge-alias link); no M4b tables/jobs/pages.
+- [NEW] paired `lang/ar/review.php`, `lang/en/review.php`, synthetic feature tests and verification report.
+- [MODIFY] Composer with only the explicitly approved PhpSpreadsheet dependency and its transitive requirements.
+
+## M4a.3 Verification and walkthrough (Steps 6–7)
+
+Test server-side and rendered authorization, blind HTML, filters and deterministic ranking, historical rescore,
+Unicode/XSS-safe highlights, duplicate actions/history, status/notes/correction/override, export reopen/sanitization,
+scope revocation/expiry/audits, weekly reconciliation and explicit units. Then PHP 8.4 lint, stan, complete tests
+and migrate:fresh --seed on a NEW isolated synthetic SQLite database. No .env changes or live services.
+Exact results and walkthrough are recorded in `docs/M4A-VERIFICATION.md`: 499 passed, 1 existing skip, 2149 assertions; all four gates green.

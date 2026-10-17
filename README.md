@@ -4,9 +4,10 @@ Arabic-first (RTL) web tool that receives CVs, extracts their text, and (from Mi
 scores them against each job's written criteria. **Humans make every decision; nothing is
 rejected automatically.** Single-tenant, hosted in Egypt, Laravel 13 + Filament v5.
 
-Status: **Milestone 1** — foundation, accounts/MFA/permissions, jobs & versioned criteria,
-manual CV upload, encrypted storage, PDF/DOCX extraction, text-quality gate, "Needs review" list,
-access log, settings. See `docs/PLAN.md` and `docs/DECISIONS.md`.
+Status: **Milestone 4a** — scoped review/ranking, evidence and comparison, duplicate resolution,
+human decisions and notes, corrections/overrides, encrypted XLSX/CSV, and weekly summary/KPIs.
+M1–M3 intake and scoring remain supported; privacy/ops/go-live work is M4b.
+See `docs/PLAN.md`, `docs/DECISIONS.md`, and `docs/M4A-VERIFICATION.md`.
 
 > Only synthetic data belongs in this repository and in development (spec D11 / PRIV-P0-05).
 > Never put a real CV, name, phone or email here or into any cloud coding tool.
@@ -142,7 +143,7 @@ exception and scoring defaults are audited through `SettingsRepository`.
 
 Cloud also requires successful deterministic masking and scoped, verified consent. `ConsentRepository`
 records a candidate **or** intake-message consent with reference, verifier and time; revoke it there when
-needed. Its domain API is ready for the M4 review UI. Ambiguous intake waits for consent even locally.
+needed. A consent-registration UI is outside M4a's review scope. Ambiguous intake waits for consent even locally.
 Names and contacts always come from PHP. City/governorate keys are fixed to null; the model never
 supplies displayed identity, a score, a human decision or candidate-facing messages.
 
@@ -173,7 +174,7 @@ without the full M3 snapshot need a newly approved version; they are never edite
 The independent recovery command `php artisan recruit:dispatch-ai` rechecks waiting work and lost
 score dispatches. A criteria change or field correction creates a new evaluation using existing facts;
 true duplicates with a valid current score enqueue no extraction or rescoring. Correction and override
-actions preserve actor/reason/history; their UI remains M4. Explanations are Arabic in either UI locale.
+actions preserve actor/reason/history; M4a supplies their review forms. Explanations are Arabic in either UI locale.
 A deterministic explanation exists immediately; the model can only order verified stored claim IDs.
 
 Synthetic recorded contracts and masking data live in `tests/Fixtures/ai/`; regenerate with
@@ -187,3 +188,30 @@ When applying the reviewed M3 upgrade, run normal migrations and re-seed only th
 (`php artisan migrate`, `php artisan db:seed --class=RolesAndPermissionsSeeder`); this registers the new
 explicit permission without granting it to a role. The destructive fresh/seed verification above was run
 only against a newly created isolated SQLite file. See `docs/M3-VERIFICATION.md` for exact gate results.
+
+## M4a review routine
+
+- `/admin/applications`: the pinned review and unscored section, a separate unranked rescore section,
+  and current-version rankings within each job. Ranking filters never filter the pinned sections.
+  Historical scores remain separate. Select two or three rows for the same job/version to compare.
+- Open an application for profile, anchored evidence, Arabic reasons, historical evaluations, internal
+  notes and status timeline. Full normalized text follows the selected document's download policy.
+  Rejection and reopening require reasons; only the owner can reopen. Interview is a manual status.
+- `/admin/duplicate-queue`: authorized reviewers compare current/incoming files and highlighted identity/job
+  differences. Every merge/keep-two/activate decision needs a reason and authority over both people's
+  applications. Activation also requires explicit recalculation confirmation. Original scores survive.
+- The detail actions call the existing correction and override actions. Corrections recalculate using
+  immutable history. An override is displayed separately; deterministic S/band still determines ranking.
+- Job export produces RTL XLSX or BOM CSV with only approved columns. Broad exporters confirm their
+  password. Name-blind omits identity columns; Arabic reasons exclude evidence quotes. Each authenticated
+  download rechecks scope/blind flags and is audited. Bytes are encrypted in `storage/private/exports/`,
+  expire at 24 hours, and the scheduler runs `recruit:purge-review-exports` every minute.
+- `/admin/weekly-summary`: separate counting units, distinct applications reviewed/scored/decided,
+  every visibility delay and pending message, exception owners/age, active users, monthly cloud cap,
+  and manually entered pilot minutes. No report is emailed. Backup health is explicitly pending M4b.
+
+Local/testing `DatabaseSeeder` now provides seven synthetic DOCX review examples without AI or mailbox
+calls. `DemoReviewSeeder` is idempotent and refuses other environments. It includes a contact-conflict pair,
+an unscored review, an unassigned application and an older score. Use existing synthetic accounts and MFA.
+Normal reviewed upgrades use migrations; fresh migration/seeding is for a disposable database only.
+M4b privacy requests, deletion/retention, backups/restore, calibration and go-live tooling are not included.

@@ -120,4 +120,10 @@ class Application extends Model
     {
         return $this->hasMany(Score::class);
     }
+
+    /** @return BelongsTo<Score, $this> */
+    public function currentScore(): BelongsTo
+    {
+        return $this->belongsTo(Score::class, 'current_score_id');
+    }
 }

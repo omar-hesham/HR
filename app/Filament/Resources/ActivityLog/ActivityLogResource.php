@@ -15,6 +15,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Lang;
 use Spatie\Activitylog\Models\Activity;
 
 /**
@@ -78,7 +79,14 @@ class ActivityLogResource extends Resource
                 TextColumn::make('event')
                     ->label(__('app.activity.event'))
                     ->badge()
-                    ->formatStateUsing(fn (?string $state): string => $state === null ? '—' : __('app.activity.events.'.str_replace('.', '_', $state))),
+                    ->formatStateUsing(function (?string $state): string {
+                        if ($state === null) {
+                            return '—';
+                        }
+                        $key = 'review.activity.'.str_replace('.', '_', $state);
+
+                        return Lang::has($key) ? __($key) : __('app.activity.events.'.str_replace('.', '_', $state));
+                    }),
                 TextColumn::make('causer.name')->label(__('app.activity.actor'))->placeholder(__('app.activity.system')),
                 TextColumn::make('subject_type')
                     ->label(__('app.activity.subject'))
@@ -88,6 +96,7 @@ class ActivityLogResource extends Resource
             ->defaultSort('created_at', 'desc')
             ->filters([
                 SelectFilter::make('log_name')->label(__('app.activity.log'))->options([
+                    'review' => __('review.activity_log'),
                     'access' => 'access',
                     'documents' => 'documents',
                     'configuration' => 'configuration',
