@@ -96,7 +96,7 @@ class UserResource extends Resource
                 ->schema([
                     CheckboxList::make('roles_input')->label(__('app.users.roles'))->options(Role::options()),
                     CheckboxList::make('permissions_input')->label(__('app.users.extra_permissions'))
-                        ->options(collect(self::GRANTABLE_PERMISSIONS)->mapWithKeys(fn (Permission $p): array => [$p->value => __('enums.permission.'.$p->value)])->all()),
+                        ->options(collect(self::GRANTABLE_PERMISSIONS)->mapWithKeys(fn (Permission $p): array => [$p->value => __('enums.permission.'.$p->value)])->all() + ['ai.pipeline.manage' => __('ai.manage_permission')]),
                     CheckboxList::make('jobs_input')->label(__('app.users.jobs'))
                         ->options(fn (): array => RecruitmentJob::query()->orderBy('title_ar')->get()->mapWithKeys(fn (RecruitmentJob $job): array => [$job->id => $job->title()])->all()),
                 ]),

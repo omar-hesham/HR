@@ -30,6 +30,10 @@ return [
     */
 
     'connections' => [
+        'ai' => [
+            'driver' => 'ai-database', 'connection' => env('DB_QUEUE_CONNECTION'), 'table' => 'jobs', 'queue' => 'ai',
+            'retry_after' => max(900, (int) env('AI_TIMEOUT_SECONDS', 600) + 180), 'after_commit' => false,
+        ],
 
         'sync' => [
             'driver' => 'sync',
@@ -84,6 +88,10 @@ return [
         'failover' => [
             'driver' => 'failover',
             'connections' => [
+                'ai' => [
+                    'driver' => 'ai-database', 'connection' => env('DB_QUEUE_CONNECTION'), 'table' => 'jobs', 'queue' => 'ai',
+                    'retry_after' => max(900, (int) env('AI_TIMEOUT_SECONDS', 600) + 180), 'after_commit' => false,
+                ],
                 'database',
                 'deferred',
             ],

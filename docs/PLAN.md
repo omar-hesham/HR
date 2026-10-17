@@ -303,3 +303,112 @@ PHP 8.4.26, local Windows, no live services. Final full run executed alone after
 Evidence: `storage/logs/m2-final-isolated.xml` (ignored local JUnit artifact).
 `.env` SHA-256 was unchanged during repair. No commit, push, deployment, package installation, or real-service connection.
 MySQL, live provider privileges/TLS, clamd and approved sending/retention remain deployment acceptance checks.
+
+---
+
+# Milestone 3 Plan — AI engine and scoring
+
+Status: complete after Steps 1–7; offline gates passed on 17/10/2026. See `docs/M3-VERIFICATION.md` for evidence and acceptance limits.
+Sources: v0.2 §6.5–6.6, §7–8, §9.3–9.5, §12–13, Appendix B S04/M5; kickoff §3–6/8; M3 brief overrides.
+
+## M3.1 Objective and scope
+
+Verified document facts feed a pure deterministic evaluator; AI never returns a score or candidate messages.
+All outbound text is masked in PHP. Cloud remains disabled until explicit configuration, verified consent,
+masking and a permission-protected legal reference agree. Intake and scoring remain independent of AI outages.
+No M4 review/export/retention/calibration UI, no live calls, no changes to .env, no commit/push/deploy.
+
+## M3.2 Flow (Steps 1–2)
+
+```mermaid
+flowchart TD
+    T["M1 quality-checked text / duplicate source"] --> W["Durable identifier-only AI work item"]
+    I["M2 rule-ambiguous message and attachment rows, already visible"] --> W
+    W --> G{"Pipeline, consent, legal approval and breaker permit dispatch?"}
+    G -->|"No"| WAIT["Visible local review: awaiting evaluation service or budget/review; no attempt or reservation"]
+    WAIT --> SCH["Scheduler outside AI queue rechecks waiting work"]
+    SCH --> G
+    G -->|"Yes"| M["Deterministic identity extraction and PHP masking; encrypted local reverse map"]
+    M --> MG{"Name unambiguous and masking verified?"}
+    MG -->|"No"| REV["Review with safe code; zero outbound requests"]
+    MG -->|"Yes"| B{"Atomic conservative monthly reservation fits cap?"}
+    B -->|"No"| WAIT
+    B -->|"Yes"| A["AI queue: fixed versioned prompt, temperature zero; one ai_runs row per attempt"]
+    A --> V{"Strict JSON Schema 2020-12 and PHP semantic/evidence checks"}
+    V -->|"Transient failure"| RT["At most 3 calls; backoff 30 then 120 seconds; breaker counts provider failures"]
+    RT --> G
+    V -->|"Contract error"| REV
+    V -->|"Valid"| E["Encrypted facts; restore quotes; Unicode coordinates from normalized text only"]
+    E --> R["Independent scoring queue: pure rules, approved version snapshot, atomic score and all criterion rows"]
+    C["Criteria approval activity / human field correction"] --> R
+    R --> H["New score row, original history preserved; deterministic Arabic explanation available immediately"]
+    H --> EX["Deferred AI explanation: permit only validated stored claim references; otherwise retain template"]
+    A --> CB["Per-provider breaker; pause only AI queue before pop; alert operator"]
+    CB --> P["Independent ProbeAiHealth every 60 seconds"]
+    P --> HO["One half_open trial; success resumes, failure reopens"]
+    HO --> G
+```
+
+## M3.3 File/module list (Step 4)
+
+- [NEW] `app/Domain/Ai/`: exact provider contract, typed masked inputs/results/errors, masker, identity rules,
+  versioned schema validator and verbatim quote verifier. `resources/ai/`: JSON schema and prompt files.
+- [NEW] `app/Domain/Scoring/`: outcomes, synonym dictionary, fact projection, operators, bands, template/claim validation.
+- [NEW] `app/Services/Ai/`: SDK/fake drivers, guarded metered gateway, atomic budget and breaker, durable work coordinator,
+  consent records, extraction/classification/explanation services, safe ops snapshot and queue guard.
+- [NEW] `app/Actions/Scoring/`: atomic scoring, correction and override actions; ranking query helper.
+- [NEW] `app/Jobs/`: ExtractStructuredFields, ScoreApplication, ExplainScore, RescoreApplication, ClassifyAmbiguousIntake,
+  ProbeAiHealth; scheduler dispatch/recovery command. [NEW] `app/Providers/AiServiceProvider.php` + model/activity observers.
+- [NEW] companion control tables (consent, work, provider states, extraction context, corrections, evaluation keys).
+  Existing tables/enums unchanged; existing fields hold facts/results/provenance as designed.
+- [MODIFY] `ProcessInboundMessage` only to enqueue ambiguous classification after durable M2 accounting.
+  Observe M1 extraction/source/application events for pipeline integration; do not rewrite M2 storage/scan/notice logic.
+- [MODIFY] Composer (only laravel/ai, opis/json-schema), config, .env.example, settings permission boundary, seeder,
+  routes/console, bootstrap/providers, lang/ar/en; [NEW] thin AI operations/settings page and views.
+- [NEW] synthetic recorded responses, masking corpus, golden/unit/integration tests; docs/README updated with worker commands.
+
+## M3.4 Step 3 self-review and corrections
+
+| Requirement | Gap found | Plan correction |
+|---|---|---|
+| ARC-P0-03 / M5-P0-06 | Middleware release would consume attempts during breaker waits | Pause only AI queue before pop; durable waiting records and independent scheduler; actual-call count bounded independently |
+| M6-P0-01 | Scoring on a paused queue would stop rules | ScoreApplication/RescoreApplication use independent scoring queue |
+| PRIV-P0-05 / M9-P0-03 | No consent storage or dedicated AI permission exists | Companion consent ledger, server-side settings guard; dedicated permission string, no role-by-default cloud enablement |
+| SC-P0-01 / kickoff 5.3 | Location keys required by spec but forbidden by brief | Keep required keys fixed to null; document deviation D-124 |
+| SC-P0-05 / ARC-P0-02 | Overwriting extraction on correction loses evidence | Append encrypted correction rows, apply by application during new atomic evaluation |
+| M6-P0-03 | Free Arabic prose cannot be reliably fact-checked | Model selects stored Arabic claim IDs/order with verbatim evidence; local renderer rejects unknown/altered claims, template immediate |
+| SC-P0-01 | Repeated quotes cannot be guessed | Resolve with page boundaries only; otherwise confidence zero and review |
+| M5-P0-05 | Crash/timeout may incur unknown cost | Retain full reservation for uncertain failures; reconciliation never exceeds it; cap uses actual plus outstanding reserves |
+| M3-P0-01 | Duplicate/new job needs score without modifying M2 | Observe linked application/source records; reuse valid extraction, idempotency by application/version/extraction/correction revision |
+| D-90 / AC03 | Scores could accidentally imply status decisions | Rules return bands/review flags only; application workflow handled separately without human decision transitions |
+
+## M3.5 QA / delivery (Steps 6–7)
+
+Offline tests: strict contracts/injection, Arabic Unicode and repeated quotes, deterministic identity/masking,
+zero outbound blocked-cloud requests, bounded retries/cap/half-open, 30 outage arrivals, worked example C1–C8
+(S65/C80; corrected S85 with history), gates/denominator/synonyms/ranking/fairness, activity-driven rescoring,
+correction/override permissions, deleted-record races, operations page excludes CV text.
+Run PHP 8.4 composer lint, composer stan (level 6/no baseline), composer test, and migrate:fresh --seed
+against a NEW isolated SQLite file with process-only safe synthetic settings (D-123). Report exact counts.
+Local model endpoint acceptance and calibration stay open for staging in Egypt; cloud stays disabled.
+
+## M3.6 Step 6 self-review findings resolved during build
+
+- Disabled SDK-internal Retry-After retries so three jobs cannot issue six unmetered requests; mocked
+  wire tests assert exactly three calls and matching persisted X-Request-ID values.
+- Durable attempt increment and reservation share a transaction before dispatch; worker death cannot
+  reset retry accounting. Lost score dispatches are recovered independently from the paused AI queue.
+- Score/result/correction/override updates are blocked after initial persistence. Validated explanation
+  enrichment uses a separate encrypted row; original deterministic reasons remain unchanged.
+- Each membership criterion keeps its own matched evidence, rather than another skill's quotation.
+  C1 checks specialization on the same degree; shift availability needs a shift-specific statement.
+- Name sources are checked for conflicting tokens, and sender names are read locally from the encrypted
+  source only. Explanation snippets are masked before serialization. No attachments or metadata reach AI.
+- Quote failures and unsupported numeric values keep confidence zero and a visible review code. Total
+  experience can use a union of complete dates; missing dates and job-specific years are never guessed.
+- Health failures can open the breaker even while idle; health waits for budget/approval do not count as
+  provider failures. Both worker connections guard ai before pop; other queues remain consumable.
+- All tests force fake/off defaults and block stray HTTP. Allowed local/cloud adapter tests use synthetic
+  HTTP responses only. The existing M1/M2 tests remain unchanged.
+
+Final gate evidence and remaining acceptance limits are recorded in `docs/M3-VERIFICATION.md`.

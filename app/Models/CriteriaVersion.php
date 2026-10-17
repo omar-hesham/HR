@@ -16,7 +16,7 @@ use Illuminate\Support\Carbon;
  * @property int $recruitment_job_id
  * @property int $version
  * @property CriteriaVersionStatus $status
- * @property array<string, float|int>|null $thresholds
+ * @property array<string, mixed>|null $thresholds
  * @property int|null $based_on_version_id
  * @property int|null $created_by
  * @property int|null $approved_by

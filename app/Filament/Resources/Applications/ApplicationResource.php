@@ -11,6 +11,7 @@ use App\Models\Application;
 use App\Models\Document;
 use App\Models\RecruitmentJob;
 use App\Models\User;
+use App\Services\Ai\AiWorkCoordinator;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Resources\Resource;
@@ -72,6 +73,7 @@ class ApplicationResource extends Resource
                     ->badge(fn (Application $record): bool => $record->job === null)
                     ->color(fn (Application $record): ?string => $record->job === null ? 'warning' : null),
                 TextColumn::make('status')
+                    ->description(fn (Application $record): ?string => app(AiWorkCoordinator::class)->labelForApplication($record->id))
                     ->label(__('app.common.status'))
                     ->badge()
                     ->formatStateUsing(fn (ApplicationStatus $state): string => $state->label())

@@ -12,6 +12,7 @@ use App\Filament\Resources\NeedsReview\Pages\ListNeedsReview;
 use App\Models\Application;
 use App\Models\DocumentSource;
 use App\Models\User;
+use App\Services\Ai\AiStatusLabels;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
@@ -100,6 +101,9 @@ class NeedsReviewResource extends Resource
     {
         return $table
             ->columns([
+                TextColumn::make('ai_waiting')
+                    ->label(__('ai.waiting'))
+                    ->state(fn (DocumentSource $record): ?string => app(AiStatusLabels::class)->forSource($record)),
                 TextColumn::make('review_opened_at')->label(__('app.review.opened_at'))->dateTime()->sortable(),
                 TextColumn::make('review_reason')
                     ->label(__('app.review.reason'))

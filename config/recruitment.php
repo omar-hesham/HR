@@ -20,6 +20,7 @@ return [
     | Defaults for the settings screen (key => default value).
     */
     'settings_defaults' => [
+        ...require __DIR__.'/ai-defaults.php',
         'ui.default_locale' => env('APP_LOCALE', 'ar'),
 
         // Applicant track (PRIV-P0-03). Placeholders until the factory approves (Q05).

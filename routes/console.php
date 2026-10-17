@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\MonitorMailboxSilence;
+use App\Jobs\ProbeAiHealth;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -14,3 +15,7 @@ Schedule::command('recruit:poll-mailboxes')->everyFiveMinutes();
 
 // Brief §7: "no mail received in N hours" alert (N in settings, per-mailbox override).
 Schedule::job(new MonitorMailboxSilence)->hourly();
+
+// M3 recovery runs outside the paused AI queue.
+Schedule::command('recruit:dispatch-ai')->everyMinute()->withoutOverlapping();
+Schedule::call(fn () => app()->call([new ProbeAiHealth, 'handle']))->name('probe-ai-health')->everyMinute()->withoutOverlapping(1);

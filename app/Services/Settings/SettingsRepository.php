@@ -5,6 +5,7 @@ namespace App\Services\Settings;
 use App\Domain\Text\QualityThresholds;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\Ai\AiSettingsValidator;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -83,6 +84,12 @@ final class SettingsRepository
      */
     public function update(array $values, ?User $actor): void
     {
+        foreach ($values as $key => $value) {
+            if (str_starts_with($key, 'ai.') || str_starts_with($key, 'scoring.')) {
+                abort_unless($actor !== null && $actor->can('ai.pipeline.manage'), 403);
+            }
+        }
+        app(AiSettingsValidator::class)->validate($values, $this->all());
         $defaults = $this->defaults();
 
         DB::transaction(function () use ($values, $actor, $defaults): void {

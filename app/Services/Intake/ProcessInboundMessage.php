@@ -22,6 +22,7 @@ use App\Models\DocumentSource;
 use App\Models\IntakeMessage;
 use App\Models\Mailbox;
 use App\Models\RecruitmentJob;
+use App\Services\Ai\AiWorkCoordinator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
@@ -200,6 +201,8 @@ final class ProcessInboundMessage
 
         if ($needsReview) {
             $this->finish($message, IntakeOutcome::NeedsReview, $reviewReason ?? 'items_need_review');
+
+            app(AiWorkCoordinator::class)->ambiguous($message->id);
 
             return new ProcessedMessageResult(true, $message->id, $reviewReason, $message->received_at, true, $cvReceived, $applicationCreated);
         }

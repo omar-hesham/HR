@@ -22,6 +22,8 @@ class RolesAndPermissionsSeeder extends Seeder
             PermissionModel::findOrCreate($name, 'web');
         }
 
+        PermissionModel::findOrCreate('ai.pipeline.manage', 'web');
+
         foreach (Role::cases() as $role) {
             RoleModel::findOrCreate($role->value, 'web')
                 ->syncPermissions(array_map(static fn (Permission $p): string => $p->value, $role->permissions()));

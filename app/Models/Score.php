@@ -38,7 +38,7 @@ class Score extends Model
 
     protected function casts(): array
     {
-        return ['reason_enc' => 'encrypted'];
+        return ['reason_enc' => 'encrypted', 'score' => 'decimal:2', 'coverage' => 'decimal:2'];
     }
 
     /**

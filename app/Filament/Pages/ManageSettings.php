@@ -65,6 +65,9 @@ class ManageSettings extends Page
         $values = [];
 
         foreach (app(SettingsRepository::class)->all() as $key => $value) {
+            if (str_starts_with($key, 'ai.') || str_starts_with($key, 'scoring.')) {
+                continue;
+            }
             data_set($values, $key, $value);
         }
 
@@ -158,6 +161,9 @@ class ManageSettings extends Page
         $values = [];
 
         foreach (array_keys($repository->defaults()) as $key) {
+            if (str_starts_with($key, 'ai.') || str_starts_with($key, 'scoring.')) {
+                continue;
+            }
             if (data_get($state, $key) !== null) {
                 $values[$key] = data_get($state, $key);
             }
