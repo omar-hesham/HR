@@ -26,6 +26,7 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Http\UploadedFile;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use RuntimeException;
 
 /**
  * Manual single/bulk upload (M2-P0-01). Files go straight to the UploadDocuments action
@@ -127,6 +128,14 @@ class UploadDocuments extends Page
             $result = app(UploadDocumentsAction::class)->handle($files, $user, $job);
         } catch (UploadLimitExceeded $e) {
             Notification::make()->danger()->title(__($e->translationKey, ['limit' => $e->limit]))->send();
+
+            return;
+        } catch (RuntimeException $e) {
+            // No malware scanner on this server: uploads stay refused (D-107); say so instead of a 500 page.
+            if (! in_array($e->getMessage(), ['malware_scanner_required', 'unknown_malware_scanner'], true)) {
+                throw $e;
+            }
+            Notification::make()->danger()->title(__('app.upload.scanner_unavailable'))->send();
 
             return;
         } finally {

@@ -169,6 +169,7 @@ return [
         'no_job' => 'No job (assign later)',
         'job_help' => 'The job these CVs applied for. Leave empty if unknown; the application will wait for assignment.',
         'submit' => 'Upload',
+        'scanner_unavailable' => 'Upload is not available on this server: no malware scanner is configured, so files are safely refused.',
         'done' => 'Upload finished: :stored stored, :duplicates duplicates linked, :rejected need review.',
         'errors' => [
             'too_many_files' => 'Too many files in one batch (limit :limit).',
