@@ -11,6 +11,8 @@ use Illuminate\Support\Carbon;
 /**
  * Recruitment mailbox connection (Milestone 2). Secrets use an encrypted credentials field or a non-secret config reference.
  *
+ * @property string|null $display_name
+ * @property string|null $folder
  * @property int $id
  * @property string $provider
  * @property string $address
@@ -36,7 +38,7 @@ class Mailbox extends Model
     use HasFactory;
 
     protected $fillable = [
-        'provider', 'address', 'host', 'port', 'encryption', 'auth_type', 'credential_ref', 'cursor',
+        'display_name', 'folder', 'provider', 'address', 'host', 'port', 'encryption', 'auth_type', 'credential_ref', 'cursor',
         'uidvalidity', 'start_at', 'last_success_at', 'last_message_at', 'last_error', 'silence_alert_hours',
         'last_silence_alert_at', 'active', 'credentials',
     ];

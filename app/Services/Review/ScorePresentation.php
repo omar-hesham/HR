@@ -19,7 +19,7 @@ final class ScorePresentation
             $evidence = json_decode($result->evidence_enc ?? '[]', true, 512, JSON_THROW_ON_ERROR);
             $evidence = is_array($evidence) ? $evidence : [];
             $all = [...$all, ...$evidence];
-            $rows[] = ['criterion' => $result->criterion, 'result' => $result->result, 'confidence' => $result->confidence, 'source' => $result->source, 'evidence' => $evidence];
+            $rows[] = ['criterion' => $result->criterion, 'result' => $result->result, 'confidence' => $result->confidence, 'source' => $result->source, 'evidence' => $evidence, 'normalizations' => json_decode($result->normalizations_enc ?? '[]', true, 512, JSON_THROW_ON_ERROR)];
         }
         $enrichment = $score->application->job?->getAttribute('rules_only') ? null : DB::table('score_explanations')->where('score_id', $score->id)->value('body_enc');
 

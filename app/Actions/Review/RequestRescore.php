@@ -9,12 +9,17 @@ use App\Models\User;
 
 final class RequestRescore
 {
-    public function handle(Application $application, User $actor): void
+    public function handle(Application $application, User $actor, bool $synchronously = false): void
     {
         $application->refresh();
         abort_unless(ReviewAccess::manage($actor, $application), 403);
         abort_unless($application->job?->current_criteria_version_id !== null, 422);
         activity('review')->causedBy($actor)->performedOn($application)->event('rescore.requested')->log('rescore.requested');
-        RescoreApplication::dispatch($application->id)->afterCommit();
+        $job = new RescoreApplication($application->id);
+        if ($synchronously) {
+            app()->call([$job, 'handle']);
+        } else {
+            dispatch($job)->afterCommit();
+        }
     }
 }

@@ -8,6 +8,7 @@ use App\Domain\Ai\AiProvider;
 use App\Domain\Ai\ArabicExplanation;
 use App\Domain\Ai\ClassificationResult;
 use App\Domain\Ai\CriterionResults;
+use App\Domain\Ai\DispatchContext;
 use App\Domain\Ai\Evidence;
 use App\Domain\Ai\ExtractionResult;
 use App\Domain\Ai\HealthResult;
@@ -17,6 +18,7 @@ use App\Domain\Ai\MaskedText;
 use App\Domain\Ai\ProviderResult;
 use App\Domain\Ai\Schema;
 use App\Domain\Ai\UsageSummary;
+use App\Services\Demo\RecordedDemoResponses;
 
 /** Recorded synthetic responses only; no network implementation. */
 final class FakeAiDriver implements AiProvider
@@ -45,16 +47,22 @@ final class FakeAiDriver implements AiProvider
 
     public function classifyEmail(MaskedEmail $email): ClassificationResult
     {
+        $this->recorded('classify', $email->context);
+
         return $this->response('classify', ['text' => $email->text], ClassificationResult::class);
     }
 
     public function extract(MaskedText $text, Schema $schema, JobContext $context): ExtractionResult
     {
+        $this->recorded('extract', $text->context, $context->jobId);
+
         return $this->response('extract', ['text' => $text->text, 'job_id' => $context->jobId], ExtractionResult::class);
     }
 
     public function explain(CriterionResults $results, Evidence $evidence): ArabicExplanation
     {
+        $this->recorded('explain', $results->context, claims: $results->claims);
+
         return $this->response('explain', ['claims' => $results->claims], ArabicExplanation::class);
     }
 
@@ -66,6 +74,17 @@ final class FakeAiDriver implements AiProvider
     public function usage(): UsageSummary
     {
         return $this->lastUsage;
+    }
+
+    /** @param array<string,string> $claims */
+    private function recorded(string $purpose, DispatchContext $context, string $jobId = '', array $claims = []): void
+    {
+        if (empty($this->responses[$purpose])) {
+            $recording = app(RecordedDemoResponses::class)->response($purpose, $context, $jobId, $claims);
+            if ($recording !== null) {
+                $this->push($purpose, $recording);
+            }
+        }
     }
 
     /**

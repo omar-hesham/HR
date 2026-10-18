@@ -34,6 +34,7 @@ class GuidedTour
         $targets = [
             'welcome' => null,
             'screening' => '[data-tour="screening"] .fi-sidebar-group-btn',
+            'top_three' => '[data-tour="top-three"]',
             'ranking' => '[data-tour="ranking"]',
             'exceptions' => '[data-tour="exceptions"]',
             'upload' => '[data-tour="upload"], a[href="'.route('filament.admin.pages.upload').'"]',

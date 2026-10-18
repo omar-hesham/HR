@@ -14,16 +14,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $criterion_id
  * @property string $result
  * @property string|null $evidence_enc
+ * @property string|null $normalizations_enc
  * @property string|null $confidence
  * @property string $source
  */
 class CriterionResult extends Model
 {
-    protected $fillable = ['score_id', 'criterion_id', 'result', 'evidence_enc', 'confidence', 'source'];
+    protected $fillable = ['score_id', 'criterion_id', 'result', 'evidence_enc', 'normalizations_enc', 'confidence', 'source'];
 
     protected function casts(): array
     {
-        return ['evidence_enc' => EncryptedContent::class];
+        return ['evidence_enc' => EncryptedContent::class, 'normalizations_enc' => EncryptedContent::class];
     }
 
     /**

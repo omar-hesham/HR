@@ -40,7 +40,7 @@ final class CompareApplications
                 foreach ($row['evidence'] as $evidence) {
                     $quote = (string) ($evidence['quote'] ?? '');
                     if ($blind) {
-                        $quote = $this->redact($quote, $application);
+                        $quote = app(EvidenceRedactor::class)->redact($quote, $application);
                     }
                     $quotes[] = ['quote' => $quote, 'document_id' => $evidence['document_id'] ?? null, 'start' => $evidence['start'] ?? null, 'end' => $evidence['end'] ?? null];
                 }
@@ -54,18 +54,5 @@ final class CompareApplications
         }
 
         return $result;
-    }
-
-    private function redact(string $quote, Application $application): string
-    {
-        $candidate = $application->candidate;
-        $tokens = array_filter([$candidate->name, $candidate->email, $candidate->phone, $candidate->phone_original,
-            ...preg_split('/\s+/u', $candidate->name ?? '', -1, PREG_SPLIT_NO_EMPTY)]);
-        foreach ($tokens as $token) {
-            $quote = str_ireplace($token, __('review.redacted'), $quote);
-        }
-        $quote = preg_replace('/[A-Z0-9._%+\-]+@[A-Z0-9.\-]+\.[A-Z]{2,}/iu', __('review.redacted'), $quote) ?? '';
-
-        return preg_replace('/\+?[\d\x{0660}-\x{0669}][\d\x{0660}-\x{0669}\s().\-]{7,}\d/u', __('review.redacted'), $quote) ?? '';
     }
 }

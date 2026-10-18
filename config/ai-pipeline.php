@@ -2,7 +2,7 @@
 
 return [
     'driver' => env('AI_DRIVER', 'fake'), 'timeout' => (int) env('AI_TIMEOUT_SECONDS', 600),
-    'model' => env('AI_MODEL', 'local-model'), 'cloud_model' => env('AI_CLOUD_MODEL', 'approved-model-required'),
+    'model' => env('AI_MODEL', 'local-model'), 'cloud_model' => env('AI_CLOUD_MODEL', 'gemini-3.8-flash'),
     'identity' => [
         'name_labels' => ['name', 'full name', 'الاسم', 'الاسم بالكامل'],
         'generic_words' => ['cv', 'resume', 'curriculum', 'vitae', 'profile', 'application', 'synthetic', 'test', 'candidate', 'engineer', 'technician', 'accountant', 'experience', 'education', 'skills', 'name', 'الاسم', 'سيره', 'ذاتيه', 'مهندس', 'فني', 'خبره', 'السيره', 'الذاتيه'],

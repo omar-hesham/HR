@@ -28,7 +28,7 @@ function m3Text(): string
 }
 function m3Snapshot(): array
 {
-    return ['strong' => 70, 'review' => 40, 'confidence' => .8, 'education_levels' => config('recruitment.qualification_levels'), 'synonyms' => config('ai-rules.synonyms'), 'negative_markers' => config('ai-rules.negative_markers'), 'affirmative_statements' => config('ai-rules.affirmative_statements'), 'negative_shift_statements' => config('ai-rules.negative_shift_statements')];
+    return ['strong' => 70, 'review' => 40, 'confidence' => .8, 'education_levels' => config('recruitment.qualification_levels'), 'synonyms' => config('ai-rules.synonyms'), 'normalization' => config('recruitment.comparison_vocabulary'), 'negative_markers' => config('ai-rules.negative_markers'), 'affirmative_statements' => config('ai-rules.affirmative_statements'), 'negative_shift_statements' => config('ai-rules.negative_shift_statements')];
 }
 function m3Facts(string $jobId = '1'): array
 {

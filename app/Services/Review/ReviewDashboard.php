@@ -23,8 +23,11 @@ final class ReviewDashboard
         abort_unless($user->isUsable() && $user->can('viewAny', Application::class), 403);
         $reviews = app(ReviewApplications::class);
 
+        $jobs = $this->jobs($user);
+
         return [
-            'jobs' => $this->jobs($user),
+            'jobs' => $jobs,
+            'top' => app(TopApplications::class)->cards($user, $jobs, is_numeric($filters['job'] ?? null) ? (int) $filters['job'] : null),
             'ranked' => $reviews->ranked($user, $filters)->paginate(25, ['applications.*'], 'rankPage'),
             'exceptions' => $reviews->exceptions($user)->whereNotIn('applications.id', $reviews->stale($user)->select('applications.id'))->paginate(25, ['applications.*'], 'exceptionPage'),
             'rescore' => $reviews->stale($user)->with(['candidate', 'job', 'currentScore.criteriaVersion', 'currentScore.overrides', 'scores.criteriaVersion'])->orderBy('received_at')->orderBy('id')->paginate(25, ['applications.*'], 'rescorePage'),

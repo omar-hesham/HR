@@ -1,0 +1,130 @@
+{
+    "schema_version": "1.0",
+    "name": {
+        "value": null,
+        "evidence": [],
+        "confidence": 0
+    },
+    "contacts": {
+        "email": {
+            "value": null,
+            "evidence": [],
+            "confidence": 0
+        },
+        "phone": {
+            "value": null,
+            "evidence": [],
+            "confidence": 0
+        }
+    },
+    "city": null,
+    "governorate": null,
+    "education": [
+        {
+            "level": {
+                "value": "دبلوم فني",
+                "evidence": [
+                    {
+                        "quote": "Industrial diploma, electrical department"
+                    }
+                ],
+                "confidence": 0.95
+            },
+            "field": {
+                "value": "كهرباء",
+                "evidence": [
+                    {
+                        "quote": "Industrial diploma, electrical department"
+                    }
+                ],
+                "confidence": 0.95
+            }
+        }
+    ],
+    "experience_total_years": {
+        "value": 3,
+        "evidence": [
+            {
+                "quote": "3 years of experience in electrical maintenance"
+            }
+        ],
+        "confidence": 0.95
+    },
+    "experience_relevant_years": [
+        {
+            "job_id": "1",
+            "years": {
+                "value": 3,
+                "evidence": [
+                    {
+                        "quote": "3 years of experience in electrical maintenance"
+                    }
+                ],
+                "confidence": 0.95
+            }
+        }
+    ],
+    "previous_roles": [],
+    "skills": [
+        {
+            "value": "تشغيل أنظمة التحكم PLC",
+            "evidence": [
+                {
+                    "quote": "Diagnosing PLC faults"
+                }
+            ],
+            "confidence": 0.95
+        },
+        {
+            "value": "قراءة المخططات الكهربائية (schematics)",
+            "evidence": [
+                {
+                    "quote": "Reading control panel schematics"
+                }
+            ],
+            "confidence": 0.95
+        },
+        {
+            "value": "Not worked on wire-drawing machines",
+            "evidence": [
+                {
+                    "quote": "I have not worked on wire-drawing machines"
+                }
+            ],
+            "confidence": 0.95
+        }
+    ],
+    "certifications": [],
+    "languages": [],
+    "military_status": {
+        "value": null,
+        "evidence": [],
+        "confidence": 0
+    },
+    "shift_availability": {
+        "value": "Willing to work rotating shifts",
+        "evidence": [
+            {
+                "quote": "Available for shift work"
+            }
+        ],
+        "confidence": 0.95
+    },
+    "expected_salary": {
+        "amount": {
+            "value": null,
+            "evidence": [],
+            "confidence": 0
+        },
+        "currency": {
+            "value": null,
+            "evidence": [],
+            "confidence": 0
+        },
+        "period": {
+            "value": null,
+            "evidence": [],
+            "confidence": 0
+        }
+    }
+}

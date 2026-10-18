@@ -40,6 +40,7 @@ enum Permission: string
     case SettingsBusiness = 'settings.business';
     case SettingsIntegration = 'settings.integration';
     case OpsHealthView = 'ops.health.view';
+    case MailboxesManage = 'mailboxes.manage';
 
     case CandidatesDeleteApprove = 'candidates.delete_approve';
     case CandidatesDeleteRequest = 'candidates.delete_request';

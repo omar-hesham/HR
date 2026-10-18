@@ -1,0 +1,60 @@
+{
+    "schema_version": "1.0",
+    "name": {
+        "value": null,
+        "evidence": [],
+        "confidence": 0
+    },
+    "contacts": {
+        "email": {
+            "value": null,
+            "evidence": [],
+            "confidence": 0
+        },
+        "phone": {
+            "value": null,
+            "evidence": [],
+            "confidence": 0
+        }
+    },
+    "city": null,
+    "governorate": null,
+    "education": [],
+    "experience_total_years": {
+        "value": null,
+        "confidence": 0,
+        "evidence": []
+    },
+    "experience_relevant_years": [],
+    "previous_roles": [],
+    "skills": [],
+    "certifications": [],
+    "languages": [],
+    "military_status": {
+        "value": null,
+        "evidence": [],
+        "confidence": 0
+    },
+    "shift_availability": {
+        "value": null,
+        "confidence": 0,
+        "evidence": []
+    },
+    "expected_salary": {
+        "amount": {
+            "value": null,
+            "evidence": [],
+            "confidence": 0
+        },
+        "currency": {
+            "value": null,
+            "evidence": [],
+            "confidence": 0
+        },
+        "period": {
+            "value": null,
+            "evidence": [],
+            "confidence": 0
+        }
+    }
+}

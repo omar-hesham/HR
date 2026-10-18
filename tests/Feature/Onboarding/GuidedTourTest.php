@@ -79,7 +79,7 @@ it('refuses tour actions when the current account is unusable or lacks MFA', fun
     expect($user->fresh()->tour_completed_at)->toBeNull();
 })->with(['inactive', 'expired', 'no-mfa'])->with(['complete', 'skip', 'replay']);
 
-it('has complete translated copy for all eleven steps and controls', function () {
+it('has complete translated copy for all twelve steps and controls', function () {
     $ar = Arr::dot(require lang_path('ar/tour.php'));
     $en = Arr::dot(require lang_path('en/tour.php'));
     expect(array_keys($ar))->toBe(array_keys($en));
@@ -91,7 +91,7 @@ it('has complete translated copy for all eleven steps and controls', function ()
     foreach (['ar', 'en'] as $locale) {
         app()->setLocale($locale);
         $steps = app(Tour::class)->steps();
-        expect($steps)->toHaveCount(11)->and($steps[0]['target'])->toBeNull()->and($steps[10]['target'])->toBeNull();
+        expect($steps)->toHaveCount(12)->and($steps[0]['target'])->toBeNull()->and($steps[11]['target'])->toBeNull();
         foreach ($steps as $step) {
             expect($step['title'])->not->toStartWith('tour.steps.')
                 ->and($step['body'])->not->toStartWith('tour.steps.');

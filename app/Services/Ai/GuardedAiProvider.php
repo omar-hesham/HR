@@ -50,7 +50,9 @@ final class GuardedAiProvider implements AiProvider
 
     public function extract(MaskedText $text, Schema $schema, JobContext $context): ExtractionResult
     {
-        return $this->call('extract', $text->context, mb_strlen($text->text) + mb_strlen($schema->json()), $text->succeeded, fn ($driver) => $driver->extract($text, $schema, $context), function ($result) use ($schema, $context): void {
+        $characters = mb_strlen($text->text) + mb_strlen($schema->json()) + mb_strlen(json_encode($context->trustedData(), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
+
+        return $this->call('extract', $text->context, $characters, $text->succeeded, fn ($driver) => $driver->extract($text, $schema, $context), function ($result) use ($schema, $context): void {
             $schema->validate($result->data);
             foreach ($result->data['experience_relevant_years'] as $experience) {
                 if ($experience['job_id'] !== $context->jobId) {

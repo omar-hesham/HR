@@ -163,6 +163,8 @@ return [
         'doctorate',
     ],
 
+    'comparison_vocabulary' => require __DIR__.'/comparison-vocabulary.php',
+
     /*
     | Kickoff §5.4 / SC-P0-04: names a criterion field may never use, and
     | unambiguous terms that may not appear in criterion labels or targets.

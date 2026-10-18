@@ -5,11 +5,12 @@ namespace App\Domain\Scoring;
 use App\Domain\Criteria\CriterionData;
 use App\Domain\Criteria\CriterionField;
 use App\Domain\Criteria\CriterionOperator;
+use App\Domain\Text\SearchNormalizer;
 
 /** Pure evaluation: no database, AI, clock, application status, or score mutation. */
 final class RulesEngine
 {
-    public const VERSION = '1.0';
+    public const VERSION = '1.1';
 
     /**
      * @param list<CriterionData> $criteria
@@ -25,12 +26,30 @@ final class RulesEngine
         $weak = false;
         $review = false;
         $dictionary = new SynonymDictionary($snapshot['synonyms'] ?? []);
+        $normalizer = new RuleInputNormalizer($snapshot['normalization'] ?? [], $snapshot['synonyms'] ?? [], $snapshot['education_levels'] ?? []);
         foreach ($criteria as $criterion) {
             $field = CriterionField::tryFrom($criterion->field);
             if ($field === null || ! in_array(CriterionOperator::tryFrom($criterion->operator), $field->operators(), true)) {
                 $out = $this->result('unclear');
             } else {
-                $out = $this->evaluateCriterion($criterion, $this->project($facts, $field, $jobId), $snapshot, $dictionary);
+                $inputs = [];
+                foreach ($this->project($facts, $field, $jobId) as $fact) {
+                    if ($field === CriterionField::EducationLevel) {
+                        $fact['education_field'] = $normalizer->normalize('education_field', $fact['education_field'], isset($criterion->target['field']) ? [$criterion->target['field']] : [])[0];
+                    }
+                    $inputs = [...$inputs, ...$normalizer->normalize($field->value, $fact, $criterion->target['values'] ?? [])];
+                }
+                $out = $this->evaluateCriterion($criterion, $inputs, $snapshot, $dictionary);
+                $out['normalizations'] = [];
+                foreach ($inputs as $input) {
+                    $traceInputs = [['field' => $field->value, 'fact' => $input], ['field' => 'education_field', 'fact' => $input['education_field'] ?? []]];
+                    foreach ($traceInputs as $traceInput) {
+                        $value = $traceInput['fact'];
+                        if (array_key_exists('normalized_from', $value)) {
+                            $out['normalizations'][] = ['field' => $traceInput['field'], 'value' => $value['value'], 'normalized_from' => $value['normalized_from']];
+                        }
+                    }
+                }
             }
             $results[] = $out;
             if ($criterion->type === 'nice_to_have' && ($criterion->weight ?? 0) > 0) {
@@ -178,7 +197,7 @@ final class RulesEngine
                 }
             }
             if ($operator === 'is_explicitly_true') {
-                $truth = $this->explicitTruth($fact, $snapshot);
+                $truth = $this->explicitTruth($fact, $snapshot, $criterion->field === 'shift_availability');
                 if ($truth === null) {
                     return $this->result('unclear', $evidence, $confidence, $source);
                 }
@@ -274,8 +293,8 @@ final class RulesEngine
     private function negative(array $fact, array $snapshot): bool
     {
         foreach ($fact['evidence'] as $item) {
-            foreach ($snapshot['negative_markers'] ?? [] as $marker) {
-                if (preg_match('/(?<![\p{L}\p{N}])'.preg_quote($marker, '/').'(?![\p{L}\p{N}])/iu', $item['quote'])) {
+            foreach ([...($snapshot['negative_markers'] ?? []), ...($snapshot['normalization']['negation'] ?? [])] as $marker) {
+                if (preg_match('/(?<![\p{L}\p{N}])'.preg_quote(SearchNormalizer::normalize($marker), '/').'(?![\p{L}\p{N}])/iu', SearchNormalizer::normalize($item['quote']))) {
                     return true;
                 }
             }
@@ -287,19 +306,39 @@ final class RulesEngine
     /**
      * @param array<string,mixed> $fact
      * @param array<string,mixed> $snapshot */
-    private function explicitTruth(array $fact, array $snapshot): ?bool
+    private function explicitTruth(array $fact, array $snapshot, bool $shift): ?bool
     {
         $dictionary = new SynonymDictionary($snapshot['synonyms'] ?? []);
         $value = $dictionary->canonical((string) $fact['value']);
         if (in_array($fact['source'] ?? 'model', ['human_answer', 'human_correction'], true) && is_bool($fact['value'])) {
             return $fact['value'];
         }
+        $normalizer = new RuleInputNormalizer($snapshot['normalization'] ?? [], $snapshot['synonyms'] ?? [], $snapshot['education_levels'] ?? []);
+        $truths = [];
         foreach ($fact['evidence'] as $item) {
-            foreach ($snapshot['negative_shift_statements'] ?? [] as $statement) {
+            $truth = $normalizer->truth($item['quote'], $shift);
+            if ($truth !== null) {
+                $truths[] = $truth;
+            }
+            foreach (isset($snapshot['normalization']) ? [] : ($snapshot['negative_shift_statements'] ?? []) as $statement) {
                 if (mb_stripos($item['quote'], $statement, 0, 'UTF-8') !== false) {
                     return false;
                 }
             }
+        }
+        if ($truths !== []) {
+            if (count(array_unique($truths, SORT_REGULAR)) > 1) {
+                return null;
+            }
+            if ($truths[0] === false) {
+                return false;
+            }
+            if (in_array($value, ['true', 'yes', 'available'], true)) {
+                return true;
+            }
+        }
+        if (isset($snapshot['normalization'])) {
+            return null;
         }
         if (in_array($value, ['true', 'yes', 'available'], true)) {
             foreach ($fact['evidence'] as $item) {

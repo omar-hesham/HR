@@ -27,6 +27,20 @@ final class ImapMailboxDriver implements MailboxDriver
         private readonly ?ClientManager $clients = null,
     ) {}
 
+    public function testConnection(Mailbox $mailbox): void
+    {
+        $client = $this->connect($mailbox);
+        try {
+            $connection = $client->getConnection();
+            if (! $connection instanceof ImapProtocol) {
+                throw new \RuntimeException('native_imap_required');
+            }
+            $connection->examineFolder($mailbox->folder ?? (string) config('recruitment.intake.folder'))->validatedData();
+        } finally {
+            $client->disconnect();
+        }
+    }
+
     public function fetch(Mailbox $mailbox, ?string $cursor, ?Carbon $startAt, int $limit): InboundBatch
     {
         $client = $this->connect($mailbox);
@@ -37,7 +51,7 @@ final class ImapMailboxDriver implements MailboxDriver
                 throw new \RuntimeException('native_imap_required');
             }
 
-            $selected = $connection->examineFolder((string) config('recruitment.intake.folder'))->validatedData();
+            $selected = $connection->examineFolder($mailbox->folder ?? (string) config('recruitment.intake.folder'))->validatedData();
             $validity = isset($selected['uidvalidity']) ? (string) $selected['uidvalidity'] : null;
             $cursorUid = $validity !== $mailbox->uidvalidity ? 0 : (int) $cursor;
             $criteria = $startAt === null ? ['ALL'] : ['SINCE', $startAt->format('d-M-Y')];

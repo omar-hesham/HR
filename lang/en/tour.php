@@ -18,6 +18,10 @@ return [
             'title' => 'Start with Screening',
             'body' => 'The Screening group brings together applications, uploads, review items and reports. Available tools depend on your permissions.',
         ],
+        'top_three' => [
+            'title' => 'Top 3 candidates per job',
+            'body' => 'The model extracts facts with evidence, then rules rank candidates against approved criteria. Review evidence and missing requirements; these are suggestions for your decision.',
+        ],
         'ranking' => [
             'title' => 'Read the ranking and bands',
             'body' => 'Applications are ranked within each job using its current approved criteria. Strong match, needs review and weak match bands support your review; they are not hiring decisions.',

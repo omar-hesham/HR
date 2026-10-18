@@ -48,7 +48,7 @@ final readonly class StructuredExtraction
         AiExtractionContext::query()->updateOrCreate(['extraction_id' => $extraction->id], ['mask_map_enc' => json_encode($masked->substitutions, JSON_THROW_ON_ERROR), 'job_context_id' => (string) $application->recruitment_job_id]);
         $local = $this->identity->extract($text, $documentId, sender: $sender, filename: $filename);
         $military = $this->settings->bool('ai.military_enabled') && trim($this->settings->string('ai.military_legal_ref')) !== '';
-        $response = $this->provider->extract($masked, new Schema, new JobContext((string) $application->recruitment_job_id, $application->job->title_en ?? '', $military));
+        $response = $this->provider->extract($masked, new Schema, new JobContext((string) $application->recruitment_job_id, $application->job->title_en ?? '', $military, $application->job === null ? [] : app(ComparisonVocabulary::class)->forJob($application->job)));
         $payload = $response->data;
         $payload['name'] = $local['name'];
         $payload['contacts'] = $local['contacts'];

@@ -79,16 +79,21 @@ class DemoReviewSeeder extends Seeder
         }
     }
 
-    /** @return array{application:Application} */
-    private function fixture(RecruitmentJob $job, int $index): array
+    /** @return list<string> */
+    public static function syntheticTexts(): array
     {
-        $name = self::NAMES[$index];
-        $email = in_array($index, [2, 3], true) ? 'demo-shared@example.test' : 'demo-'.$index.'@example.test';
-        $phone = '+2010'.str_pad((string) $index, 8, '0', STR_PAD_LEFT);
-        $text = __('review.demo_text', compact('name', 'email', 'phone'), 'ar');
-        $candidate = Candidate::query()->create(['uuid' => (string) Str::uuid(), 'name' => $name, 'email' => $email, 'phone' => $phone,
-            'email_hmac' => hash_hmac('sha256', $email, (string) config('recruitment.hash.dedup_key')),
-            'phone_hmac' => hash_hmac('sha256', $phone, (string) config('recruitment.hash.dedup_key')), 'received_at' => now()->subHours($index + 1)]);
+        $texts = [];
+        foreach (self::NAMES as $index => $name) {
+            $email = in_array($index, [2, 3], true) ? 'demo-shared@example.test' : 'demo-'.$index.'@example.test';
+            $phone = '+2010'.str_pad((string) $index, 8, '0', STR_PAD_LEFT);
+            $texts[] = __('review.demo_text', compact('name', 'email', 'phone'), 'ar');
+        }
+
+        return $texts;
+    }
+
+    public static function documentBytes(string $text): string
+    {
         $word = new PhpWord;
         $section = $word->addSection();
         foreach (explode("\n", $text) as $line) {
@@ -97,10 +102,24 @@ class DemoReviewSeeder extends Seeder
         ob_start();
         try {
             IOFactory::createWriter($word, 'Word2007')->save('php://output');
-            $bytes = (string) ob_get_contents();
+
+            return (string) ob_get_contents();
         } finally {
             ob_end_clean();
         }
+    }
+
+    /** @return array{application:Application} */
+    private function fixture(RecruitmentJob $job, int $index): array
+    {
+        $name = self::NAMES[$index];
+        $email = in_array($index, [2, 3], true) ? 'demo-shared@example.test' : 'demo-'.$index.'@example.test';
+        $phone = '+2010'.str_pad((string) $index, 8, '0', STR_PAD_LEFT);
+        $text = self::syntheticTexts()[$index];
+        $candidate = Candidate::query()->create(['uuid' => (string) Str::uuid(), 'name' => $name, 'email' => $email, 'phone' => $phone,
+            'email_hmac' => hash_hmac('sha256', $email, (string) config('recruitment.hash.dedup_key')),
+            'phone_hmac' => hash_hmac('sha256', $phone, (string) config('recruitment.hash.dedup_key')), 'received_at' => now()->subHours($index + 1)]);
+        $bytes = self::documentBytes($text);
         $uuid = (string) Str::uuid();
         $document = Document::query()->create(['uuid' => $uuid, 'candidate_id' => $candidate->id,
             'path' => app(EncryptedDocumentStore::class)->put($candidate->uuid, $uuid, $bytes), 'sha256' => hash('sha256', $bytes),

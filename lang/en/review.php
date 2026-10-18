@@ -182,4 +182,5 @@ Additional: wire drawing machine maintenance (wire drawing)',
         'minutes' => 'minutes',
         'runs' => 'runs',
     ],
+    'normalized_value' => 'Comparison value: :value (from: :from)',
 ];

@@ -143,7 +143,7 @@ return [
         'unclear' => 'غير واضح',
     ],
     'sources' => [
-        'model' => 'النموذج',
+        'model' => 'الموديل',
         'human_correction' => 'تصحيح بشري',
         'human_answer' => 'إجابة بشرية',
     ],
@@ -182,4 +182,5 @@ return [
         'minutes' => 'دقيقة',
         'runs' => 'عملية',
     ],
+    'normalized_value' => 'قيمة المقارنة: :value (الأصل: :from)',
 ];

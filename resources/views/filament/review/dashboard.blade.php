@@ -5,6 +5,7 @@
 @endphp
 @include('filament.review.styles')
 <div class="review-stack">
+    @include('filament.review.top-applications')
     <div class="review-stack" data-tour="exceptions">
     <div role="status" aria-live="polite" class="review-grid">
         <x-filament::section><strong>{{ __('review.unscored') }}: <bdi>{{ $data['unscored_count'] }}</bdi></strong></x-filament::section>

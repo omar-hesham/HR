@@ -32,6 +32,7 @@ enum Role: string
     {
         return match ($this) {
             self::Owner => [
+                Permission::MailboxesManage,
                 Permission::ApplicationsViewAll,
                 Permission::ApplicationsViewUnassigned,
                 Permission::DocumentsDownloadAll,
@@ -84,6 +85,7 @@ enum Role: string
                 Permission::JobsView,
             ],
             self::Operator => [
+                Permission::MailboxesManage,
                 Permission::OpsHealthView,
             ],
         };

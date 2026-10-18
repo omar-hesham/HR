@@ -30,7 +30,7 @@ final readonly class CostMeter
                 throw new AiDeferred('awaiting_budget');
             }
 
-            return AiRun::query()->create(['document_id' => $context->documentId, 'purpose' => $purpose, 'driver' => $driver, 'model' => (string) config('ai-pipeline.'.($driver === 'cloud' ? 'cloud_model' : 'model')), 'prompt_version' => $purpose.'-v1', 'status' => 'reserved', 'reserved_cost_egp' => number_format($reserved / 10000, 4, '.', ''), 'cost_egp' => null, 'request_id' => (string) Str::uuid()]);
+            return AiRun::query()->create(['document_id' => $context->documentId, 'purpose' => $purpose, 'driver' => $driver, 'model' => (string) config('ai-pipeline.'.($driver === 'cloud' ? 'cloud_model' : 'model')), 'prompt_version' => $purpose === 'extract' ? ExtractionAgent::PROMPT_VERSION : $purpose.'-v1', 'status' => 'reserved', 'reserved_cost_egp' => number_format($reserved / 10000, 4, '.', ''), 'cost_egp' => null, 'request_id' => (string) Str::uuid()]);
         });
     }
 

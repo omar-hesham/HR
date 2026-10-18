@@ -16,6 +16,14 @@ use Illuminate\Support\Carbon;
  */
 final class FakeMailboxDriver implements MailboxDriver
 {
+    public function testConnection(Mailbox $mailbox): void
+    {
+        $directory = $mailbox->host ?: (string) config('recruitment.intake.fake_path');
+        if (! is_dir($directory) || ! is_readable($directory)) {
+            throw new \RuntimeException('fake_mailbox_unavailable');
+        }
+    }
+
     public function fetch(Mailbox $mailbox, ?string $cursor, ?Carbon $startAt, int $limit): InboundBatch
     {
         $directory = trim((string) ($mailbox->host ?? ''));

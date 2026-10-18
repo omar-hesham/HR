@@ -25,7 +25,11 @@
                 <table class="review-table"><thead><tr><th>{{ __('review.criterion') }}</th><th>{{ __('review.outcome') }}</th><th>{{ __('review.confidence') }}</th><th>{{ __('app.common.source') }}</th><th>{{ __('review.evidence') }}</th></tr></thead><tbody>
                 @foreach ($data['score']['rows'] as $row)
                     <tr data-result="{{ $row['result'] }}">
-                        <td dir="auto">{{ app()->getLocale() === 'ar' ? $row['criterion']->label_ar : $row['criterion']->label_en }}</td>
+                        <td dir="auto">{{ app()->getLocale() === 'ar' ? $row['criterion']->label_ar : $row['criterion']->label_en }}
+                            @foreach ($row['normalizations'] as $normalization)
+                                <div class="review-muted" dir="auto">{{ __('review.normalized_value', ['value' => is_bool($normalization['value']) ? json_encode($normalization['value']) : $normalization['value'], 'from' => $normalization['normalized_from']]) }}</div>
+                            @endforeach
+                        </td>
                         <td><div class="review-outcome" data-result="{{ $row['result'] }}">{{ __('review.outcomes.'.$row['result']) }}</div></td>
                         <td class="review-number">{{ number_format((float) $row['confidence'] * 100, 0, '.', '') }}%</td>
                         <td>{{ __('review.sources.'.$row['source']) }}</td>

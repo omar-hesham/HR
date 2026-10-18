@@ -13,6 +13,9 @@ use Illuminate\Support\Carbon;
  */
 interface MailboxDriver
 {
+    /** Authenticate and EXAMINE the folder only; never search or fetch messages. */
+    public function testConnection(Mailbox $mailbox): void;
+
     /**
      * Raw messages after the cursor (exclusive) and received at/after $startAt,
      * oldest first, at most $limit.

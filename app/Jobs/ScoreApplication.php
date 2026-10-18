@@ -20,8 +20,15 @@ class ScoreApplication implements ShouldBeUnique, ShouldQueue
 
     public int $uniqueFor = 600;
 
-    public function __construct(public readonly int $applicationId, public readonly ?int $versionId = null)
+    // Defaults also cover jobs serialized before these options were introduced.
+    public ?string $rescoreRequest = null;
+
+    public bool $explain = true;
+
+    public function __construct(public readonly int $applicationId, public readonly ?int $versionId = null, ?string $rescoreRequest = null, bool $explain = true)
     {
+        $this->rescoreRequest = $rescoreRequest;
+        $this->explain = $explain;
         $this->onQueue('scoring');
     }
 
@@ -45,7 +52,7 @@ class ScoreApplication implements ShouldBeUnique, ShouldQueue
     public function handle(EvaluateApplication $evaluator): void
     {
         try {
-            $evaluator->handle($this->applicationId, $this->versionId);
+            $evaluator->handle($this->applicationId, $this->versionId, $this->rescoreRequest, $this->explain);
         } catch (Throwable) {
             throw new RuntimeException('score_failed');
         }
