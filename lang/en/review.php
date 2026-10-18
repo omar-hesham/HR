@@ -5,16 +5,17 @@ return [
     'export_reason_summary' => 'Score :score; coverage :coverage; criteria version :version.',
     'historical_score' => 'View this historical evaluation',
     'demo_decision' => 'Synthetic demo shortlist decision.',
-    'demo_text' => 'SYNTHETIC DEMO CV
-:name
-:email
-:phone
-Electrical diploma
-3 years in electrical maintenance
-Willing to work rotating shifts
-PLC
-schematics
-Electrical safety training',
+    'demo_text' => 'SYNTHETIC DEMO CV — not a real person
+Name: :name
+Email: :email
+Phone: :phone
+Qualification: technical diploma (Electrical diploma)
+Experience: 3 years in electrical line maintenance
+Skills: PLC control systems
+Skills: reading electrical schematics
+Certifications: Electrical safety training
+Shifts: Willing to work rotating shifts
+Additional: wire drawing machine maintenance (wire drawing)',
     'current_scores' => 'Current evaluations (same version required)',
     'rescore_section' => 'Unranked — needs recalculation',
     'activity_log' => 'Human review',
@@ -36,6 +37,11 @@ Electrical safety training',
     'age' => 'Age',
     'hours' => 'hours',
     'seconds' => 'seconds',
+    'duration' => [
+        'hours_minutes' => ':h h :m m',
+        'minutes_seconds' => ':m m :s s',
+        'seconds_only' => ':s s',
+    ],
     'latest_reason' => 'Latest failure / review reason',
     'awaiting_evaluation' => 'Awaiting evaluation',
     'actions' => 'Actions',
@@ -99,6 +105,7 @@ Electrical safety training',
     'xlsx' => 'Excel workbook (XLSX)',
     'csv' => 'UTF-8 CSV',
     'purpose' => 'Export purpose',
+    'export_helper' => 'The file is encrypted on the server, expires after 24 hours, and every download is written to the access log.',
     'password' => 'Confirm your password',
     'reauthenticate' => 'Confirm your password again before a broad export or download (15-minute limit).',
     'weekly' => 'Weekly summary and KPIs',
@@ -115,7 +122,7 @@ Electrical safety training',
     'active_users' => 'Weekly active users (audited actions)',
     'cloud_cap' => 'Current-month cloud consumption / cap',
     'backup_health' => 'Backup health',
-    'backup_pending' => 'Pending M4b backup implementation',
+    'backup_pending' => 'Not yet enabled — delivered operational before go-live',
     'visibility_all' => 'Every intake item — oldest visibility delay first',
     'visible' => 'Visible',
     'pending' => 'Pending',

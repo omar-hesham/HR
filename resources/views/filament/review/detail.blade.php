@@ -78,7 +78,7 @@
     </div>
     <x-filament::section :heading="__('review.corrections')">
         @foreach ($data['corrections'] as $correction)
-            <details><summary><bdi>{{ $correction->path }}</bdi> · {{ __('review.actor_id', ['id' => $correction->user_id]) }} · <bdi>{{ $correction->created_at->timezone('Africa/Cairo')->format('d/m/Y H:i') }}</bdi> · {{ __('review.sources.'.$correction->source) }}</summary>
+            <details><summary><bdi>{{ $correction->path }}</bdi> · <bdi dir="auto">{{ $correction->user?->name ?? __('review.actor_id', ['id' => $correction->user_id]) }}</bdi> · <bdi>{{ $correction->created_at->timezone('Africa/Cairo')->format('d/m/Y H:i') }}</bdi> · {{ __('review.sources.'.$correction->source) }}</summary>
                 <div dir="auto">{{ $correction->before_enc }} → {{ $correction->after_enc }}</div><p dir="auto">{{ $correction->reason_enc }}</p>
             </details>
         @endforeach

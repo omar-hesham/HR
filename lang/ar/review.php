@@ -5,16 +5,17 @@ return [
     'export_reason_summary' => 'الدرجة :score؛ التغطية :coverage؛ إصدار المعايير :version.',
     'historical_score' => 'عرض هذا التقييم التاريخي',
     'demo_decision' => 'قرار قائمة مختصرة تجريبي اصطناعي.',
-    'demo_text' => 'سيرة تجريبية اصطناعية
-:name
-:email
-:phone
-Electrical diploma
-3 years in electrical maintenance
-Willing to work rotating shifts
-PLC
-schematics
-Electrical safety training',
+    'demo_text' => 'سيرة ذاتية تجريبية اصطناعية — لا تمثل أي شخص حقيقي
+الاسم: :name
+البريد الإلكتروني: :email
+الهاتف: :phone
+المؤهل: دبلوم فني كهرباء (Electrical diploma)
+الخبرة: 3 years — ثلاث سنوات في صيانة الخطوط الكهربائية
+المهارات: تشغيل أنظمة التحكم PLC
+المهارات: قراءة المخططات الكهربائية (schematics)
+الشهادات: Electrical safety training — تدريب السلامة الكهربائية
+الورديات: Willing to work rotating shifts
+خبرة إضافية: صيانة ماكينات سحب الأسلاك (wire drawing)',
     'current_scores' => 'التقييمات الحالية (يشترط تطابق الإصدار)',
     'rescore_section' => 'خارج الترتيب — يحتاج إعادة حساب',
     'activity_log' => 'المراجعة البشرية',
@@ -36,6 +37,11 @@ Electrical safety training',
     'age' => 'العمر',
     'hours' => 'ساعة',
     'seconds' => 'ثانية',
+    'duration' => [
+        'hours_minutes' => ':h س :m د',
+        'minutes_seconds' => ':m د :s ث',
+        'seconds_only' => ':s ث',
+    ],
     'latest_reason' => 'آخر إخفاق / سبب المراجعة',
     'awaiting_evaluation' => 'بانتظار التقييم',
     'actions' => 'الإجراءات',
@@ -99,6 +105,7 @@ Electrical safety training',
     'xlsx' => 'ملف إكسل (XLSX)',
     'csv' => 'ملف CSV بترميز UTF-8',
     'purpose' => 'غرض التصدير',
+    'export_helper' => 'الملف يُشفَّر على السيرفر، وتنتهي صلاحيته بعد 24 ساعة، ويُسجَّل كل تنزيل في سجل الوصول.',
     'password' => 'تأكيد كلمة المرور',
     'reauthenticate' => 'أكد كلمة المرور مجددًا قبل التصدير الواسع أو التنزيل (الحد 15 دقيقة).',
     'weekly' => 'الملخص الأسبوعي ومؤشرات الأداء',
@@ -115,7 +122,7 @@ Electrical safety training',
     'active_users' => 'المستخدمون النشطون أسبوعيًا (إجراءات مسجلة)',
     'cloud_cap' => 'استهلاك السحابة للشهر الحالي / السقف',
     'backup_health' => 'حالة النسخ الاحتياطي',
-    'backup_pending' => 'بانتظار تنفيذ النسخ الاحتياطي في M4b',
+    'backup_pending' => 'لم يُفعَّل بعد — يُسلَّم مشغّلًا قبل بدء الاستخدام الفعلي',
     'visibility_all' => 'كل عنصر استقبال — أكبر تأخر ظهور أولًا',
     'visible' => 'وقت الظهور',
     'pending' => 'قيد الانتظار',

@@ -24,6 +24,6 @@ final class ApplicationDetail
             'score' => $selectedScore === null ? null : app(ScorePresentation::class)->data($selectedScore),
             'scores' => $scores, 'notes' => $application->notes()->with('user')->latest('id')->paginate(20, ['*'], 'notePage'),
             'events' => $application->statusEvents()->with('user')->latest('id')->paginate(30, ['*'], 'eventPage'),
-            'corrections' => FieldCorrection::query()->where('application_id', $application->id)->latest('id')->paginate(20, ['*'], 'correctionPage')];
+            'corrections' => FieldCorrection::query()->with('user')->where('application_id', $application->id)->latest('id')->paginate(20, ['*'], 'correctionPage')];
     }
 }

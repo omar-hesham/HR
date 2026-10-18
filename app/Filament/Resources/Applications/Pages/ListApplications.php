@@ -108,7 +108,7 @@ class ListApplications extends Page
                 ->schema([
                     Select::make('job')->label(__('app.jobs.singular'))->options(fn (): array => app(ReviewDashboard::class)->jobs($this->actor()))->required(),
                     Select::make('format')->label(__('review.format'))->options(['xlsx' => __('review.xlsx'), 'csv' => __('review.csv')])->default('xlsx')->required(),
-                    Textarea::make('purpose')->label(__('review.purpose'))->required()->maxLength(1000),
+                    Textarea::make('purpose')->label(__('review.purpose'))->helperText(__('review.export_helper'))->required()->maxLength(1000),
                     TextInput::make('password')->label(__('review.password'))->password()->autocomplete('current-password')
                         ->visible(fn (): bool => $this->actor()->hasPermission(Permission::ExportsAll))->required(fn (): bool => $this->actor()->hasPermission(Permission::ExportsAll)),
                 ])->action(function (array $data): void {

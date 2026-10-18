@@ -124,6 +124,17 @@ it('enforces correction and override permissions both in UI and direct action', 
     m4HttpException(fn () => app(CorrectionForm::class)->handle($f['application'], $manager, 'can_reach_plant_for_shift', 'true', 'Human answer', 'No permission'), 403);
 });
 
+it('shows the actor display name in the correction log with the id as fallback only', function () {
+    $f = m4Application();
+    $viewer = userWithRole(Role::Owner);
+    $reviewer = userWithRole(Role::Owner);
+    app(CorrectionForm::class)->handle($f['application'], $reviewer, 'can_reach_plant_for_shift', 'true', 'Confirmed by phone', 'Verified by reviewer');
+
+    Livewire::actingAs($viewer)->test(ViewApplication::class, ['record' => $f['application']->id])
+        ->assertSee($reviewer->name)
+        ->assertDontSee(__('review.actor_id', ['id' => $reviewer->id]));
+});
+
 it('never sends candidate messages during any manual decision', function () {
     Mail::fake();
     $f = m4Application();

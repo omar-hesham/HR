@@ -7,11 +7,14 @@ use App\Domain\Review\EvidencePreview;
 use App\Filament\Pages\WeeklySummary;
 use App\Models\AiRun;
 use App\Models\Application;
+use App\Models\Candidate;
 use App\Models\DocumentSource;
 use App\Models\IntakeMessage;
+use App\Models\Score;
 use App\Models\User;
 use App\Services\Applications\ApplicationStatusService;
 use App\Services\Review\DuplicateQueue;
+use App\Services\Review\HumanDuration;
 use App\Services\Review\ReviewApplications;
 use App\Services\Review\WeeklyReport;
 use Database\Seeders\DatabaseSeeder;
@@ -125,9 +128,46 @@ it('seeds an offline synthetic review routine once with no provider runs', funct
     $this->seed(DemoReviewSeeder::class);
     $owner = User::where('email', 'owner@example.test')->firstOrFail();
     $review = app(ReviewApplications::class);
-    expect(Application::query()->count())->toBe(7)
-        ->and($review->ranked($owner)->count())->toBe(4)
+    expect(Application::query()->count())->toBe(12)
+        ->and($review->ranked($owner)->count())->toBe(9)
+        ->and($review->ranked($owner)->get()->pluck('currentScore.band')->unique()->sort()->values()->all())->toBe(['needs_review', 'strong_match', 'weak_match'])
         ->and($review->stale($owner)->count())->toBe(1)
         ->and(AiRun::query()->count())->toBe(0)
-        ->and(app(DuplicateQueue::class)->pairs($owner))->toHaveCount(1);
+        ->and(app(DuplicateQueue::class)->pairs($owner))->toHaveCount(1)
+        ->and(Candidate::query()->where('email', 'demo-shared@example.test')->count())->toBe(2);
+});
+
+it('keeps every seeded evidence quote an exact substring of the synthetic CV text', function () {
+    Storage::fake('private');
+    $this->seed(DatabaseSeeder::class);
+    $checked = 0;
+    foreach (Score::query()->with(['criterionResults', 'extraction'])->get() as $score) {
+        $text = (string) $score->extraction->normalizedText();
+        foreach ($score->criterionResults as $result) {
+            foreach (json_decode((string) $result->evidence_enc, true, 512) ?: [] as $evidence) {
+                expect(mb_strpos($text, (string) $evidence['quote']))->not->toBeFalse();
+                $checked++;
+            }
+        }
+    }
+    expect($checked)->toBeGreaterThan(0);
+});
+
+it('resolves exception owners to display names with the id kept as fallback', function () {
+    $f = m4Application();
+    $owner = userWithRole(Role::Owner);
+    $data = app(WeeklyReport::class)->data($owner, now()->toDateString());
+    expect($data['exceptions'][0]['owners'])->toContain($owner->id)
+        ->and($data['exceptions'][0]['owner_names'][$owner->id])->toBe($owner->name);
+});
+
+it('humanizes durations on the weekly summary while the stored KPI stays seconds', function () {
+    $format = app(HumanDuration::class);
+    app()->setLocale('ar');
+    expect($format->format(417))->toBe('6 د 57 ث')
+        ->and($format->format(11700))->toBe('3 س 15 د')
+        ->and($format->format(45))->toBe('45 ث');
+    app()->setLocale('en');
+    expect($format->format(417))->toBe('6 m 57 s');
+    app()->setLocale('ar');
 });

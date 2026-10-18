@@ -29,12 +29,13 @@ it('renders the login page in Arabic, right-to-left, with the self-hosted font',
 it('switches the interface language per user from the user menu route', function () {
     $user = userWithRole(Role::Owner);
 
-    $this->actingAs($user)->get('/admin')->assertSee('dir="rtl"', false);
+    $this->actingAs($user)->followingRedirects()->get('/admin')->assertOk()->assertSee('dir="rtl"', false);
 
     $this->actingAs($user)->get(route('locale.switch', 'en'))->assertRedirect();
     expect($user->fresh()->locale)->toBe('en');
 
-    $this->actingAs($user->fresh())->get('/admin')
+    $this->actingAs($user->fresh())->followingRedirects()->get('/admin')
+        ->assertOk()
         ->assertSee('lang="en"', false)
         ->assertSee('dir="ltr"', false);
 

@@ -110,7 +110,8 @@ final class WeeklyReport
             if ($owners === []) {
                 $owners = User::role('owner')->pluck('id')->all();
             }
-            $exceptions[] = ['id' => $application->id, 'seconds' => (int) max(0, Carbon::parse($opened)->diffInSeconds(now())), 'owners' => $owners];
+            $exceptions[] = ['id' => $application->id, 'seconds' => (int) max(0, Carbon::parse($opened)->diffInSeconds(now())), 'owners' => $owners,
+                'owner_names' => User::query()->whereIn('id', $owners)->pluck('name', 'id')->all()];
         }
         usort($exceptions, fn (array $a, array $b): int => $b['seconds'] <=> $a['seconds']);
 

@@ -310,4 +310,12 @@ return [
         'notice_subject' => 'Your application has been received — privacy notice',
         'notice_body' => 'Thank you for contacting us. Your CV has been received and will be processed for recruitment purposes only, in line with the factory\'s approved privacy policy. You may request access to, correction of, or deletion of your data at any time by replying to this message. This notice is sent once per application period.',
     ],
+
+    'demo_reset' => [
+        'refused' => 'This command runs in the local development environment only (APP_ENV=local).',
+        'done' => 'Synthetic demo data reset: :applications applications and :candidates candidates.',
+        'mail' => 'Ingested :messages synthetic mail messages from the fixture folder.',
+        'mail_failed' => 'The fixture mailbox poll failed; check the intake health page.',
+        'kept' => 'No account, role, permission or setting was touched (including MFA enrolment).',
+    ],
 ];

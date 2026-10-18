@@ -26,7 +26,7 @@ it('keeps a signed-in session across consecutive panel requests', function () {
     $user = userWithRole(Role::Owner);
 
     // Real session flow (no actingAs shortcut on the second request).
-    $this->actingAs($user)->get('/admin')->assertOk();
+    $this->actingAs($user)->get('/admin')->assertRedirect('/admin/applications');
     $this->get('/admin/recruitment-jobs')->assertOk();
     $this->get('/admin/applications')->assertOk();
 });

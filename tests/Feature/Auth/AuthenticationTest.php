@@ -29,8 +29,8 @@ it('sends a user without MFA to the set-up page before anything else', function 
         ->assertRedirect(route('filament.admin.auth.multi-factor-authentication.set-up-required'));
 })->with(['/admin', '/admin/applications', '/admin/needs-review', '/admin/settings']);
 
-it('lets an MFA-enrolled user into the panel', function () {
-    $this->actingAs(userWithRole(Role::Owner))->get('/admin')->assertOk();
+it('lets an MFA-enrolled user into the panel, landing on the review list', function () {
+    $this->actingAs(userWithRole(Role::Owner))->get('/admin')->assertRedirect('/admin/applications');
 });
 
 it('refuses the file download route to a user who has not enrolled MFA', function () {

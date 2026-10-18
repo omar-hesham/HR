@@ -22,9 +22,27 @@ use Illuminate\Support\Str;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\PhpWord;
 
-/** Synthetic, offline review walkthrough. No intake, network, extraction binary or AI calls. */
+/**
+ * Synthetic, offline review walkthrough. No intake, network, extraction binary or AI calls.
+ *
+ * Twelve Arabic-named synthetic candidates. Special indexes the demo script relies on:
+ * 2 and 3 share one email (duplicate pair), 4 is low quality, 5 is unassigned,
+ * 6 is scored on the superseded criteria version. Indexes 7-11 fill the ranked
+ * list across the strong/needs-review/weak bands.
+ */
 class DemoReviewSeeder extends Seeder
 {
+    private const NAMES = ['محمد سيد أحمد', 'أحمد عبد الفتاح حسن', 'محمود رمضان عبد الله', 'مصطفى كامل السيد',
+        'عمر هشام مصطفى', 'خالد فتحي إبراهيم', 'حسن علي محمد', 'كريم سامي عبد العزيز', 'طارق منير سعيد',
+        'إسلام رجب عثمان', 'يوسف عادل عبد الرحمن', 'سيد إبراهيم فرغلي'];
+
+    /** Certificates (85-100 strong candidates) per index. */
+    private const CERTIFIED = [0, 2, 6, 7, 11];
+
+    /** Skill sets per index; every scored candidate still passes all must-haves. */
+    private const SKILLS = [7 => ['PLC', 'schematics'], 8 => ['PLC', 'schematics'], 9 => ['wire drawing'],
+        10 => ['schematics'], 11 => ['PLC', 'schematics', 'wire drawing']];
+
     public function run(): void
     {
         if (! app()->environment(['local', 'testing']) || Application::query()->where('external_reference', 'm4a-demo-0')->exists()) {
@@ -38,7 +56,7 @@ class DemoReviewSeeder extends Seeder
         $oldVersion = $job->current_criteria_version_id;
         $version = app(ApproveCriteriaVersion::class)->handle(app(StartDraftVersion::class)->handle($job, $owner), $owner);
         $job->refresh();
-        for ($index = 0; $index < 7; $index++) {
+        for ($index = 0; $index < count(self::NAMES); $index++) {
             $fixture = Model::withoutEvents(fn (): array => $this->fixture($job, $index));
             $application = $fixture['application'];
             if ($index === 4) {
@@ -56,7 +74,7 @@ class DemoReviewSeeder extends Seeder
                 app(ApplicationStatusService::class)->transition($application, ApplicationStatus::Scored);
             }
             if ($index === 0) {
-                app(ApplicationStatusService::class)->transition($application->refresh(), ApplicationStatus::Shortlisted, $owner, __('review.demo_decision', [], 'en'));
+                app(ApplicationStatusService::class)->transition($application->refresh(), ApplicationStatus::Shortlisted, $owner, __('review.demo_decision', [], 'ar'));
             }
         }
     }
@@ -64,10 +82,10 @@ class DemoReviewSeeder extends Seeder
     /** @return array{application:Application} */
     private function fixture(RecruitmentJob $job, int $index): array
     {
-        $name = 'DEMO Synthetic Candidate '.chr(65 + $index);
+        $name = self::NAMES[$index];
         $email = in_array($index, [2, 3], true) ? 'demo-shared@example.test' : 'demo-'.$index.'@example.test';
         $phone = '+20100000000'.$index;
-        $text = __('review.demo_text', compact('name', 'email', 'phone'), 'en');
+        $text = __('review.demo_text', compact('name', 'email', 'phone'), 'ar');
         $candidate = Candidate::query()->create(['uuid' => (string) Str::uuid(), 'name' => $name, 'email' => $email, 'phone' => $phone,
             'email_hmac' => hash_hmac('sha256', $email, (string) config('recruitment.hash.dedup_key')),
             'phone_hmac' => hash_hmac('sha256', $phone, (string) config('recruitment.hash.dedup_key')), 'received_at' => now()->subHours($index + 1)]);
@@ -102,9 +120,10 @@ class DemoReviewSeeder extends Seeder
             return ['value' => $value, 'confidence' => 1, 'source' => 'human_correction',
                 'evidence' => [['document_id' => $document->id, 'quote' => $quote, 'page' => 1, 'start' => $start, 'end' => $start + mb_strlen($quote)]]];
         };
+        $skills = array_map(fn (string $skill): array => $fact($skill, $skill), self::SKILLS[$index] ?? ['PLC', 'schematics']);
         $fields = ['education' => [['level' => $fact('technical_diploma', 'Electrical diploma'), 'field' => $fact('electrical', 'Electrical diploma')]],
             'experience_total_years' => $fact(3, '3 years'), 'experience_relevant_years' => [['job_id' => (string) $job->id, 'years' => $fact(3, '3 years')]],
-            'skills' => [$fact('PLC', 'PLC'), $fact('schematics', 'schematics')], 'certifications' => $index % 2 === 0 ? [$fact('electrical safety', 'Electrical safety training')] : [],
+            'skills' => $skills, 'certifications' => in_array($index, self::CERTIFIED, true) ? [$fact('electrical safety', 'Electrical safety training')] : [],
             'languages' => [], 'previous_roles' => [], 'shift_availability' => $fact(true, 'Willing to work rotating shifts')];
         Extraction::query()->create(['document_id' => $document->id, 'extractor' => 'synthetic-demo', 'extractor_version' => 'm4a-v1',
             'status' => $index === 4 ? 'needs_review' : 'ok', 'raw_text_enc' => $text, 'normalized_text_enc' => $text, 'offset_map_enc' => '[]',
