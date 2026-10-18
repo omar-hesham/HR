@@ -1,0 +1,44 @@
+.recruit-demo-banner {
+    position: fixed; inset: 0 0 auto; z-index: 60; padding: .35rem 1rem;
+    background: #fef3c7; color: #78350f; font-size: .78rem; line-height: 1.7;
+    text-align: center; border-bottom: 1px solid #f59e0b;
+}
+.fi-body:has([data-demo-banner]) { padding-top: var(--recruit-demo-height, 2.75rem); }
+.fi-body:has([data-demo-banner]) .fi-topbar-ctn { top: var(--recruit-demo-height, 2.75rem); }
+.fi-body:has([data-demo-banner]) .fi-sidebar {
+    top: var(--recruit-demo-height, 2.75rem);
+    height: calc(100dvh - var(--recruit-demo-height, 2.75rem));
+}
+.recruit-demo-upload-warning {
+    padding: .65rem 1rem; border: 1px solid #f59e0b; border-radius: .5rem;
+    background: #fef3c7; color: #78350f; font-size: .875rem; line-height: 1.8;
+}
+.recruit-tour { position: fixed; inset: 0; z-index: 100000; isolation: isolate; }
+.recruit-tour-shade { position: absolute; inset: 0; background: rgb(2 6 23 / 72%); }
+.recruit-tour-spotlight {
+    position: fixed; pointer-events: none; border-radius: .65rem;
+    box-shadow: 0 0 0 100vmax rgb(2 6 23 / 72%); border: 2px solid #5eead4;
+    transition: top 280ms ease, left 280ms ease, width 280ms ease, height 280ms ease;
+}
+.recruit-tour-card {
+    position: fixed; width: min(24rem, calc(100vw - 2rem)); max-height: calc(100dvh - 2rem);
+    overflow: auto; padding: 1.4rem; border-radius: 1rem;
+    background: #fff; color: #0f172a; box-shadow: 0 20px 60px rgb(0 0 0 / 30%);
+    text-align: start; line-height: 1.9; top: 50%; left: 50%; transform: translate(-50%, -50%);
+}
+.dark .recruit-tour-card { background: #18212f; color: #f1f5f9; }
+.recruit-tour-card h2 { font-size: 1.12rem; font-weight: 700; margin-block: .35rem .7rem; }
+.recruit-tour-card h2:focus { outline: none; }
+.recruit-tour-counter { font-size: .8rem; color: #0f766e; font-variant-numeric: tabular-nums; }
+.dark .recruit-tour-counter { color: #5eead4; }
+.recruit-tour-buttons { display: flex; flex-wrap: wrap; gap: .5rem; margin-block-start: 1rem; }
+.recruit-tour-buttons button { cursor: pointer; padding: .4rem .8rem; border: 1px solid #94a3b8; border-radius: .5rem; font: inherit; font-size: .85rem; }
+.recruit-tour-buttons button:disabled { cursor: default; opacity: .5; }
+.recruit-tour-buttons button:focus-visible { outline: 3px solid #14b8a6; outline-offset: 3px; }
+.recruit-tour-buttons .recruit-tour-primary { color: #fff; background: #0f766e; border-color: #0f766e; }
+.recruit-tour-buttons .recruit-tour-skip { border-color: transparent; margin-inline-start: auto; }
+.recruit-tour-error { color: #b91c1c; font-size: .85rem; }
+.dark .recruit-tour-error { color: #fca5a5; }
+@media (prefers-reduced-motion: reduce) {
+    .recruit-tour *, .recruit-tour *::before, .recruit-tour *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}

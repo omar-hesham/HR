@@ -21,6 +21,7 @@ use Filament\Pages\Page;
 use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Form;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Http\UploadedFile;
@@ -83,6 +84,7 @@ class UploadDocuments extends Page
                     ->placeholder(__('app.upload.no_job'))
                     ->required(fn (): bool => ! $this->user()->hasPermission(Permission::ApplicationsViewUnassigned) && ! $this->user()->hasPermission(Permission::ApplicationsViewAll))
                     ->helperText(__('app.upload.job_help')),
+                View::make('filament.onboarding.upload-warning')->visible(fn (): bool => (bool) config('app.demo_banner')),
                 FileUpload::make('files')
                     ->label(__('app.upload.files'))
                     ->helperText(__('app.upload.files_help', [

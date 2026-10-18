@@ -102,8 +102,10 @@ class ListApplications extends Page
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('upload')->label(__('app.upload.title'))->url(UploadDocuments::getUrl())->visible(fn (): bool => UploadDocuments::canAccess()),
+            Action::make('upload')->label(__('app.upload.title'))->url(UploadDocuments::getUrl())->visible(fn (): bool => UploadDocuments::canAccess())
+                ->extraAttributes(['data-tour' => 'upload']),
             Action::make('export')->label(__('review.export'))
+                ->extraAttributes(['data-tour' => 'export'])
                 ->visible(fn (): bool => $this->actor()->hasPermission(Permission::ExportsAll) || $this->actor()->hasPermission(Permission::ExportsAssigned))
                 ->schema([
                     Select::make('job')->label(__('app.jobs.singular'))->options(fn (): array => app(ReviewDashboard::class)->jobs($this->actor()))->required(),

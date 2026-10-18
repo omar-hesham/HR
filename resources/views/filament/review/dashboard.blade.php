@@ -5,6 +5,7 @@
 @endphp
 @include('filament.review.styles')
 <div class="review-stack">
+    <div class="review-stack" data-tour="exceptions">
     <div role="status" aria-live="polite" class="review-grid">
         <x-filament::section><strong>{{ __('review.unscored') }}: <bdi>{{ $data['unscored_count'] }}</bdi></strong></x-filament::section>
         <x-filament::section><strong>{{ __('review.needs_review') }}: <bdi>{{ $data['needs_review_count'] }}</bdi></strong></x-filament::section>
@@ -65,7 +66,8 @@
     </x-filament::section>
 
     @endforeach
-    <x-filament::section :heading="__('review.current_ranking')">
+    </div>
+    <x-filament::section :heading="__('review.current_ranking')" data-tour="ranking">
         <div class="review-grid">
             <label class="review-filter">{{ __('app.jobs.singular') }}
                 <select wire:model.live="job"><option value="">{{ __('review.all') }}</option><option value="unassigned">{{ __('app.applications.unassigned') }}</option>@foreach ($data['jobs'] as $id => $label)<option value="{{ $id }}">{{ $label }}</option>@endforeach</select>

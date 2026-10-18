@@ -17,6 +17,7 @@ use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Icons\Heroicon;
+use Filament\View\PanelsRenderHook;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -47,6 +48,10 @@ class AdminPanelProvider extends PanelProvider
                     ->brandName((string) config('app.name')),
             ], isRequired: true)
             ->userMenuItems([
+                'guided-tour' => fn (): Action => Action::make('guided-tour')
+                    ->label(__('tour.menu'))
+                    ->icon(Heroicon::OutlinedQuestionMarkCircle)
+                    ->alpineClickHandler("\$dispatch('recruit-tour-replay')"),
                 'locale-ar' => fn (): Action => Action::make('locale-ar')
                     ->label(__('app.locale.switch_to_ar'))
                     ->icon(Heroicon::OutlinedLanguage)
@@ -62,7 +67,8 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             // Screening first. Labels are closures so the order holds in both UI languages.
             ->navigationGroups([
-                NavigationGroup::make()->label(fn (): string => __('app.nav.screening')),
+                NavigationGroup::make()->label(fn (): string => __('app.nav.screening'))
+                    ->extraSidebarAttributes(['data-tour' => 'screening']),
                 NavigationGroup::make()->label(fn (): string => __('app.nav.configuration')),
                 NavigationGroup::make()->label(fn (): string => __('app.nav.administration')),
             ])
@@ -70,6 +76,9 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Home::class,
             ])
+            ->renderHook(PanelsRenderHook::HEAD_END, fn () => view('filament.onboarding.assets'))
+            ->renderHook(PanelsRenderHook::BODY_START, fn () => view('filament.onboarding.demo-banner'))
+            ->renderHook(PanelsRenderHook::BODY_END, fn () => view('filament.onboarding.tour'))
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

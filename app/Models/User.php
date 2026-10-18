@@ -28,6 +28,7 @@ use Spatie\Permission\Traits\HasRoles;
  * @property Carbon|null $access_expires_at
  * @property bool $name_blind_review
  * @property Carbon|null $last_login_at
+ * @property Carbon|null $tour_completed_at
  */
 class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery, HasName
 {
@@ -76,6 +77,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             'access_expires_at' => 'datetime',
             'name_blind_review' => 'boolean',
             'last_login_at' => 'datetime',
+            'tour_completed_at' => 'datetime',
         ];
     }
 
