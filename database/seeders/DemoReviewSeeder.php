@@ -84,7 +84,7 @@ class DemoReviewSeeder extends Seeder
     {
         $name = self::NAMES[$index];
         $email = in_array($index, [2, 3], true) ? 'demo-shared@example.test' : 'demo-'.$index.'@example.test';
-        $phone = '+20100000000'.$index;
+        $phone = '+2010'.str_pad((string) $index, 8, '0', STR_PAD_LEFT);
         $text = __('review.demo_text', compact('name', 'email', 'phone'), 'ar');
         $candidate = Candidate::query()->create(['uuid' => (string) Str::uuid(), 'name' => $name, 'email' => $email, 'phone' => $phone,
             'email_hmac' => hash_hmac('sha256', $email, (string) config('recruitment.hash.dedup_key')),
@@ -111,9 +111,11 @@ class DemoReviewSeeder extends Seeder
             'recruitment_job_id' => $index === 5 ? null : $job->id, 'source' => 'upload', 'external_reference' => 'm4a-demo-'.$index,
             'status' => 'received', 'received_at' => $candidate->received_at, 'last_activity_at' => $candidate->received_at]);
         app(ApplicationStatusService::class)->recordCreated($application, null);
-        DocumentSource::query()->create(['document_id' => $document->id, 'application_id' => $application->id, 'source' => 'upload',
+        $source = DocumentSource::query()->create(['document_id' => $document->id, 'application_id' => $application->id, 'source' => 'upload',
             'attachment_key' => 'm4a-demo-'.$index, 'attachment_kind' => 'cv', 'disposition' => 'stored', 'original_filename_enc' => 'synthetic-demo-'.$index.'.docx',
             'review_reason' => $index === 4 ? ReviewReason::LowQuality : null, 'review_opened_at' => $index === 4 ? now()->subHours(5) : null]);
+        // Realistic visibility (KPI-P0-01 target: under one hour): registered minutes after receipt, not at seed time.
+        $source->forceFill(['created_at' => $candidate->received_at->copy()->addMinutes(3 + $index * 4)])->save();
         $fact = function (mixed $value, string $quote) use ($text, $document): array {
             $start = mb_strpos($text, $quote);
 

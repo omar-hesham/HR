@@ -134,7 +134,9 @@ final readonly class AiWorkCoordinator
         if ($application !== null && $application->recruitment_job_id !== null && ($application->job?->current_criteria_version_id === null || Score::query()->whereKey($application->current_score_id)->where('band', 'configuration_review')->exists())) {
             return __('ai.states.configuration_review');
         }
-        $work = AiWorkItem::query()->where('application_id', $applicationId)->whereNotIn('state', ['done'])->orderByRaw("CASE state WHEN 'review' THEN 0 ELSE 1 END")->latest('id')->first();
+        // A pending explanation enrichment is optional (§9.4: the template explanation is already shown),
+        // so it never labels a scored application as waiting for the evaluation service.
+        $work = AiWorkItem::query()->where('application_id', $applicationId)->whereNotIn('state', ['done'])->where('purpose', '!=', 'explain')->orderByRaw("CASE state WHEN 'review' THEN 0 ELSE 1 END")->latest('id')->first();
 
         return $work === null ? null : __('ai.states.'.($work->reason ?? $work->state));
     }

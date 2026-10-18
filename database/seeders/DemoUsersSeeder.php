@@ -16,10 +16,10 @@ class DemoUsersSeeder extends Seeder
      * @var array<string, array{0: Role, 1: string, 2: string}>
      */
     public const USERS = [
-        'owner@example.test' => [Role::Owner, 'Demo Owner', 'ar'],
-        'manager@example.test' => [Role::HiringManager, 'Demo Hiring Manager', 'ar'],
-        'recruiter@example.test' => [Role::Recruiter, 'Demo Recruiter', 'ar'],
-        'coordinator@example.test' => [Role::Coordinator, 'Demo Coordinator', 'ar'],
+        'owner@example.test' => [Role::Owner, 'مالك تجريبي', 'ar'],
+        'manager@example.test' => [Role::HiringManager, 'مدير توظيف تجريبي', 'ar'],
+        'recruiter@example.test' => [Role::Recruiter, 'مسؤول توظيف تجريبي', 'ar'],
+        'coordinator@example.test' => [Role::Coordinator, 'منسق تجريبي', 'ar'],
         'management@example.test' => [Role::Management, 'Demo Management', 'en'],
         'support@example.test' => [Role::Operator, 'Demo Support', 'en'],
     ];

@@ -30,3 +30,12 @@ it('keeps a signed-in session across consecutive panel requests', function () {
     $this->get('/admin/recruitment-jobs')->assertOk();
     $this->get('/admin/applications')->assertOk();
 });
+
+it('lists the screening navigation group first in both UI languages', function (string $locale) {
+    $user = userWithRole(Role::Owner);
+    $user->forceFill(['locale' => $locale])->save();
+    app()->setLocale($locale);
+
+    $this->actingAs($user)->get('/admin/applications')->assertOk()
+        ->assertSeeInOrder([__('app.nav.screening'), __('app.nav.configuration'), __('app.nav.administration')]);
+})->with(['ar', 'en']);

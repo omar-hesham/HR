@@ -36,7 +36,7 @@ Additional: wire drawing machine maintenance (wire drawing)',
     'pinned_help' => 'These applications stay visible regardless of the ranking filters. Review the oldest first.',
     'age' => 'Age',
     'hours' => 'hours',
-    'seconds' => 'seconds',
+    'seconds' => 'Duration',
     'duration' => [
         'hours_minutes' => ':h h :m m',
         'minutes_seconds' => ':m m :s s',

@@ -36,7 +36,7 @@ return [
     'pinned_help' => 'تبقى هذه الطلبات ظاهرة مهما تغيّرت مرشحات الترتيب. ابدأ بالأقدم.',
     'age' => 'العمر',
     'hours' => 'ساعة',
-    'seconds' => 'ثانية',
+    'seconds' => 'المدة',
     'duration' => [
         'hours_minutes' => ':h س :m د',
         'minutes_seconds' => ':m د :s ث',

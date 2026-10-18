@@ -28,7 +28,7 @@
                         <td><bdi dir="auto">{{ $application->job?->title() ?? __('app.applications.unassigned') }}</bdi></td>
                         <td>{{ $application->status->label() }}</td>
                         <td class="review-number">{{ (int) $application->received_at->diffInHours(now()) }} {{ __('review.hours') }}</td>
-                        <td>{{ $application->review_reason?->label() ?? app(\App\Services\Ai\AiWorkCoordinator::class)->labelForApplication($application->id) ?? __('review.awaiting_evaluation') }}</td>
+                        <td>{{ $application->review_reason?->label() ?? app(\App\Services\Ai\AiWorkCoordinator::class)->labelForApplication($application->id) ?? ($application->current_score_id !== null ? '—' : __('review.awaiting_evaluation')) }}</td>
                         <td>
                             @if ($application->currentScore?->score !== null)
                                 @if ($presenter->isCurrent($application))
